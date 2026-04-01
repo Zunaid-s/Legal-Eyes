@@ -1,35 +1,46 @@
-import React from 'react'
 import './App.css'
-import Contact from "./contact.jsx";
-import Home from "./home.jsx";
-import About from "./about.jsx";
-class App extends React.Component {
-  constructor() {
-    super();
-    this.state = {
-      page: "home"
-    }
-  }
+import Home from "./pages/Home.jsx";
+import Contact from "./pages/Contact.jsx";
+import Navbar from "./components/Navbar.jsx";
+import About from "./pages/About.jsx";
+import { createBrowserRouter, RouterProvider, Outlet } from 'react-router';
 
-  changePage(newPage) {
-      this.setState({
-          page: newPage
-      });
-  }
-  render() {
+function Layout() {
     return (
         <div>
-          <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded border-2 border-black" onClick={()=>{this.changePage("home")}}>Home</button>
-          <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded border-2 border-black" onClick={()=>{this.changePage("about")}}>About</button>
-          <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded border-2 border-black" onClick={()=>{this.changePage("contact")}}>Contact</button>
-
-            {this.state.page === "home" && <Home />}
-            {this.state.page === "about" && <About />}
-            {this.state.page === "contact" && <Contact />}
+            <Navbar />
+            <main>
+                <Outlet />
+            </main>
         </div>
-    )
-  }
+    );
 }
 
+function App() {
+    const router = createBrowserRouter([
+        {
+            path: '/',
+            element: <Layout />,
+            children: [
+                {
+                    index: true,
+                    element: <Home />
+                },
+                {
+                    path: 'contact',
+                    element: <Contact />
+                },
+                {
+                    path: 'about',
+                    element: <About />
+                }
+            ]
+        }
+    ])
+
+    return (
+        <RouterProvider router={router} />
+    )
+}
 
 export default App
