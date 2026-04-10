@@ -9,5 +9,4 @@ public class LegalLensApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(LegalLensApplication.class, args);
 	}
-
 }
