@@ -1,12 +1,12 @@
-package com.legalLens.LegalLens;
+package com.legalEyes.LegalEyes;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class LegalLensApplication {
+public class LegalEyesApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(LegalLensApplication.class, args);
+		SpringApplication.run(LegalEyesApplication.class, args);
 	}
 }

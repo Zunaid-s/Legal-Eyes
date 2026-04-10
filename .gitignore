@@ -2,3 +2,4 @@ node_modules
 Backend/LegalEyes/src/test
 /.idea/
 .vscode
+Backend/.idea/
