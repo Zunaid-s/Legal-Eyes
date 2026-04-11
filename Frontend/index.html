@@ -1,13 +1,82 @@
-<!doctype html>
-<html data-theme="night" lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>frontend</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LegalEase | Simplify your Documents</title>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.7.2/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-base-200">
+
+    <header role="banner" class="navbar bg-base-100 shadow-md px-4 md:px-10">
+        <div class="flex-1">
+            <a class="btn btn-ghost text-xl font-bold text-primary" aria-label="LegalEase Home">LegalEase ⚖️</a>
+        </div>
+        <div class="flex-none">
+            <ul class="menu menu-horizontal px-1" role="navigation">
+                <li><a href="#how-it-works">How it works</a></li>
+            </ul>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-12">
+        <section class="text-center mb-16" aria-labelledby="hero-heading">
+            <h1 id="hero-heading" class="text-4xl md:text-6xl font-extrabold mb-4">
+                Don't just sign it, <span class="text-primary">understand it.</span>
+            </h1>
+            <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+                Paste your Rent Agreement or Offer Letter. Gemini will flag risky clauses and explain them in simple English.
+            </p>
+        </section>
+
+        <section class="max-w-4xl mx-auto bg-white p-8 rounded-2xl shadow-xl" role="region" aria-label="Document Analysis Area">
+            <div class="form-control w-full">
+                <label class="label" for="doc-input">
+                    <span class="label-text font-bold text-lg">Paste Document Text Below:</span>
+                </label>
+                <textarea id="doc-input" class="textarea textarea-bordered h-64 text-base focus:ring-2 focus:ring-primary" 
+                          placeholder="Paste the terms & conditions here..." 
+                          aria-required="true"></textarea>
+            </div>
+
+            <div class="mt-6 flex flex-col md:flex-row gap-4 items-center justify-between">
+                <div class="flex gap-2">
+                    <span class="text-sm font-medium">Dark Mode</span>
+                    <input type="checkbox" class="toggle toggle-primary" aria-label="Toggle Dark Mode" />
+                </div>
+                <button class="btn btn-primary btn-lg w-full md:w-auto px-12" onclick="analyzeDoc()">
+                    Analyze & Flag Risks 🚀
+                </button>
+            </div>
+        </section>
+
+        <section id="results" class="mt-12 hidden max-w-4xl mx-auto">
+            <h2 class="text-2xl font-bold mb-6">Our Analysis:</h2>
+            
+            <div class="alert alert-error shadow-lg mb-4" role="alert">
+                <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <div>
+                    <h3 class="font-bold text-red-900">Risky Clause: Termination without Notice</h3>
+                    <div class="text-xs text-red-800">You are agreeing that the company can fire you without pay or notice. Negotiate for 30-day notice.</div>
+                </div>
+            </div>
+
+            <div class="alert alert-info shadow-lg" role="alert">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <div>
+                    <h3 class="font-bold">Simple English</h3>
+                    <div class="text-xs text-blue-900 font-medium">In short: You have to pay rent by the 5th of every month, or there is a ₹500 fine.</div>
+                </div>
+            </div>
+        </section>
+    </main>
+</body>
+<script>
+    function analyzeDoc() {
+        // UI test karne ke liye results dikhane ka function
+        document.getElementById('results').classList.remove('hidden');
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    }
+</script>
 </html>

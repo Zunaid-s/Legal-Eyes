@@ -6,7 +6,7 @@ function App() {
   return (
     <Router>
       <div className="min-h-screen">
-        {/* DaisyUI Navbar */}
+        {}
         <div className="navbar bg-base-300 shadow-lg px-5">
           <div className="flex-1">
             <Link to="/" className="btn btn-ghost text-xl font-bold">Legal Eyes</Link>
@@ -19,7 +19,7 @@ function App() {
           </div>
         </div>
 
-        {/* Routes Configuration */}
+        {}
         <Routes>
           <Route path="/" element={<div className="p-10"><h1>Welcome to Home Page</h1></div>} />
           <Route path="/upload" element={<Upload />} />
