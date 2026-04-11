@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import Upload from "./pages/Upload";
 import Contact from "./pages/Contact";
+import LexSimple from "./pages/LexSimple";
 
 function App() {
   return (
@@ -21,7 +22,7 @@ function App() {
 
         {}
         <Routes>
-          <Route path="/" element={<div className="p-10"><h1>Welcome to Home Page</h1></div>} />
+          <Route path="/" element={<LexSimple />} />
           <Route path="/upload" element={<Upload />} />
           <Route path="/contact" element={<Contact />} />
         </Routes>
