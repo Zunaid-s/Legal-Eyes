@@ -1,31 +1,54 @@
-import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import Navbar from "./components/Navbar";
 import Upload from "./pages/Upload";
 import Contact from "./pages/Contact";
-import LexSimple from "./pages/LexSimple";
 
 function App() {
   return (
     <Router>
-      <div className="min-h-screen">
-        {/* DaisyUI Navbar */}
-        <div className="navbar bg-base-300 shadow-lg px-5">
-          <div className="flex-1">
-            <Link to="/" className="btn btn-ghost text-xl font-bold">Legal Eyes</Link>
-          </div>
-          <div className="flex-none">
-            <ul className="menu menu-horizontal px-1">
-              <li><Link to="/upload">Upload</Link></li>
-              <li><Link to="/contact">Contact</Link></li>
-            </ul>
-          </div>
-        </div>
+      {}
+      <div className="min-h-screen bg-base-100 text-base-content font-sans">
+        
+        {}
+        <Navbar />
+        {}
+        <main className="container mx-auto px-4 py-8">
+          <Routes>
+            {}
+            <Route 
+              path="/" 
+              element={
+                <div className="hero mt-20">
+                  <div className="hero-content text-center">
+                    <div className="max-w-md">
+                      <h1 className="text-5xl font-bold text-primary">Legal Eyes</h1>
+                      <p className="py-6 text-lg">
+                        Welcome to the next generation legal document management system. 
+                        Secure, fast, and intelligent.
+                      </p>
+                      <button className="btn btn-primary">Get Started</button>
+                    </div>
+                  </div>
+                </div>
+              } 
+            />
 
-        {/* Routes Configuration */}
-        <Routes>
-          <Route path="/" element={<LexSimple />} />
-          <Route path="/upload" element={<Upload />} />
-          <Route path="/contact" element={<Contact />} />
-        </Routes>
+            {}
+            <Route path="/upload" element={<Upload />} />
+            {}
+            <Route path="/contact" element={<Contact />} />
+            {}
+            <Route 
+              path="*" 
+              element={
+                <div className="text-center mt-20">
+                  <h2 className="text-4xl font-bold">404 - Page Not Found</h2>
+                </div>
+              } 
+            />
+          </Routes>
+        </main>
+
       </div>
     </Router>
   );
