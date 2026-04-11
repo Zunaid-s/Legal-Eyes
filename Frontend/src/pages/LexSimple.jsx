@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import './LexSimple.css';
 
 const API = 'https://legal-ai-livid-six.vercel.app';
@@ -212,7 +212,7 @@ function AuthPage({ nav, onLogin }) {
                 <div className="ls-form-group"><label>Password</label><input type="password" placeholder="••••••••" value={loginPassword} onChange={e => setLoginPassword(e.target.value)} /></div>
                 <button className="ls-form-submit" onClick={handleLogin}>Sign In</button>
                 <div className="ls-form-divider"><span>or continue with</span></div>
-                <button className="ls-social-btn" onClick={() => onLogin(null, 'Google Sign-In requires OAuth setup. Use email login for now.')}><GoogleIcon /> Continue with Google</button>
+                <button className="ls-social-btn" onClick={() => window.location.href = 'http://localhost:5000/auth/google'}><GoogleIcon /> Continue with Google</button>
               </div>
             ) : (
               <div className="ls-auth-form">
@@ -225,7 +225,7 @@ function AuthPage({ nav, onLogin }) {
                 <div className="ls-form-group"><label>Create password</label><input type="password" placeholder="Minimum 8 characters" value={signupPassword} onChange={e => setSignupPassword(e.target.value)} /></div>
                 <button className="ls-form-submit" onClick={handleSignup}>Create Account</button>
                 <div className="ls-form-divider"><span>or sign up with</span></div>
-                <button className="ls-social-btn" onClick={() => onLogin(null, 'Google Sign-In requires OAuth setup.')}><GoogleIcon /> Continue with Google</button>
+           <button className="ls-social-btn" onClick={() => window.location.href = 'http://localhost:5000/auth/google'}><GoogleIcon /> Continue with Google</button>
                 <p style={{ fontSize: 12, color: 'var(--ink-3)', marginTop: 14, textAlign: 'center' }}>
                   By signing up you agree to our <a href="#" style={{ color: 'var(--gold)' }}>Terms</a> and <a href="#" style={{ color: 'var(--gold)' }}>Privacy Policy</a>.
                 </p>
@@ -696,7 +696,23 @@ export default function LexSimple() {
   const [authToken, setAuthToken] = useState(() => localStorage.getItem('lexsimple_token'));
   const [currentUser, setCurrentUser] = useState(() => JSON.parse(localStorage.getItem('lexsimple_user') || 'null'));
   const [analysisData, setAnalysisData] = useState(null);
+ 
+
   const toastTimer = useRef(null);
+
+useEffect(() => {
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get('token');
+  const name = params.get('name');
+  if (token) {
+    localStorage.setItem('lexsimple_token', token);
+    localStorage.setItem('lexsimple_user', JSON.stringify({ name }));
+    setAuthToken(token);
+    setCurrentUser({ name });
+    window.history.replaceState({}, '', '/');
+    nav('upload');
+  }
+}, []);
 
   function showToast(msg) {
     if (toastTimer.current) clearTimeout(toastTimer.current);
