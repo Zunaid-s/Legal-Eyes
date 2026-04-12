@@ -1,15 +1,19 @@
-require('dotenv').config();
-const express = require('express');
-const mongoose = require('mongoose');
-const session = require('express-session');
-const passport = require('passport');
-const cors = require('cors');
-const jwt = require('jsonwebtoken');
-const GoogleStrategy = require('passport-google-oauth20').Strategy;
-const GitHubStrategy = require('passport-github2').Strategy;
-const multer = require('multer');
-const path = require('path');
-const User = require('./model/user');
+import 'dotenv/config';
+import express from 'express';
+import mongoose from 'mongoose';
+import session from 'express-session';
+import passport from 'passport';
+import cors from 'cors';
+import jwt from 'jsonwebtoken';
+import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
+import { Strategy as GitHubStrategy } from 'passport-github2';
+import multer from 'multer';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import User from './model/user.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 
@@ -20,7 +24,7 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 // Connect MongoDB
-mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('MongoDB connected'))
   .catch(err => console.log(err));
 
@@ -74,9 +78,7 @@ passport.serializeUser((user, done) => done(null, user.id));
 passport.deserializeUser((id, done) => User.findById(id).then(u => done(null, u)));
 
 // Routes
-app.get('/auth/google',
-  passport.authenticate('google', { scope: ['profile', 'email'] })
-);
+app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
 app.get('/auth/google/callback',
   passport.authenticate('google', { failureRedirect: `${process.env.CLIENT_URL}/auth?error=1` }),
@@ -90,9 +92,7 @@ app.get('/auth/google/callback',
   }
 );
 
-app.get('/auth/github',
-  passport.authenticate('github', { scope: ['user:email'] })
-);
+app.get('/auth/github', passport.authenticate('github', { scope: ['user:email'] }));
 
 app.get('/auth/github/callback',
   passport.authenticate('github', { failureRedirect: `${process.env.CLIENT_URL}/auth?error=1` }),
@@ -106,7 +106,7 @@ app.get('/auth/github/callback',
   }
 );
 
-// Ingestion Utilities (Multer)
+// Multer
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, './uploads/'),
   filename: (req, file, cb) => {
@@ -119,19 +119,11 @@ const fileFilter = (req, file, cb) => {
   const allowedTypes = /pdf|doc|docx|txt/;
   const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
   const mimetype = allowedTypes.test(file.mimetype) || file.mimetype === 'application/msword' || file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-
-  if (extname && mimetype) {
-    return cb(null, true);
-  } else {
-    cb(new Error('Invalid file type. Only PDF, DOC, DOCX, and TXT files are allowed.'));
-  }
+  if (extname && mimetype) return cb(null, true);
+  else cb(new Error('Invalid file type. Only PDF, DOC, DOCX, and TXT files are allowed.'));
 };
 
-const upload = multer({
-  storage,
-  limits: { fileSize: 25 * 1024 * 1024 }, // 25MB check
-  fileFilter
-});
+const upload = multer({ storage, limits: { fileSize: 25 * 1024 * 1024 }, fileFilter });
 
 app.post('/analyze', upload.single('document'), (req, res, next) => {
   try {
@@ -142,7 +134,6 @@ app.post('/analyze', upload.single('document'), (req, res, next) => {
   }
 });
 
-// Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(err.status || 500).json({ error: err.message || 'Something went wrong!' });
