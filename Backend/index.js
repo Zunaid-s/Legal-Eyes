@@ -52,6 +52,7 @@ passport.use(new GitHubStrategy({
   clientID: process.env.GITHUB_CLIENT_ID,
   clientSecret: process.env.GITHUB_CLIENT_SECRET,
   callbackURL: '/auth/github/callback',
+  scope: ['user:email'],
 }, async (accessToken, refreshToken, profile, done) => {
   try {
     let user = await User.findOne({ providerId: profile.id });
@@ -81,7 +82,7 @@ app.get('/auth/google/callback',
   }
 );
 
-app.get('/auth/github', passport.authenticate('github', { scope: ['user:email'] }));
+app.get('/auth/github', passport.authenticate('github'));
 
 app.get('/auth/github/callback',
   passport.authenticate('github', { failureRedirect: `${process.env.CLIENT_URL}/auth?error=1` }),

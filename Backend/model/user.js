@@ -1,4 +1,4 @@
-import { Schema, model } from "mongoose";
+const { Schema, model } = require("mongoose");
 const userSchema = new Schema({
     provider: { type: String, required: true },
     providerId: { type: String, required: true },
@@ -7,4 +7,4 @@ const userSchema = new Schema({
     avatarUrl: { type: String }
 }, { timestamps: true });
 
-export default model('User', userSchema);
+module.exports = model('User', userSchema);

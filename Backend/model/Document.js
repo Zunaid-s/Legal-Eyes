@@ -1,4 +1,4 @@
-import { Schema, model } from 'mongoose';
+const { Schema, model } = require('mongoose');
 const documentSchema = new Schema({
     filename: { type: String, required: true },
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
@@ -6,4 +6,4 @@ const documentSchema = new Schema({
     status: { type: String, enum: ['PENDING', 'PROCESSING', 'COMPLETED', 'FAILED'], default: 'PENDING' }
 }, { timestamps: true });
 
-export default model('Document', documentSchema);
+module.exports = model('Document', documentSchema);
