@@ -10,21 +10,24 @@ const GitHubStrategy = require('passport-github2').Strategy;
 const multer = require('multer');
 const path = require('path');
 const User = require('./model/user');
+const { analyzeDocument } = require('./controllers/analyzeController');
 
 const app = express();
 
 app.use(cors({ origin: process.env.CLIENT_URL, credentials: true }));
 app.use(express.json());
-app.use(session({ secret: 'lexsimple', resave: false, saveUninitialized: false }));
+app.use(session({ 
+  secret: 'lexsimple', 
+  resave: false, 
+  saveUninitialized: false 
+}));
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Connect MongoDB
-mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => console.log('MongoDB connected'))
-  .catch(err => console.log(err));
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log('✅ MongoDB connected'))
+  .catch(err => console.error('❌ MongoDB Connection Error:', err));
 
-// Google Strategy
 passport.use(new GoogleStrategy({
   clientID: process.env.GOOGLE_CLIENT_ID,
   clientSecret: process.env.GOOGLE_CLIENT_SECRET,
@@ -36,18 +39,15 @@ passport.use(new GoogleStrategy({
       user = await User.create({
         provider: 'google',
         providerId: profile.id,
-        email: profile.emails && profile.emails[0] ? profile.emails[0].value : `${profile.id}@google.com`,
-        name: profile.displayName || profile.username || 'Google User',
-        avatarUrl: profile.photos && profile.photos[0] ? profile.photos[0].value : '',
+        email: profile.emails?.[0]?.value || `${profile.id}@google.com`,
+        name: profile.displayName || 'Google User',
+        avatarUrl: profile.photos?.[0]?.value || '',
       });
     }
     return done(null, user);
-  } catch (err) {
-    return done(err, null);
-  }
+  } catch (err) { return done(err, null); }
 }));
 
-// GitHub Strategy
 passport.use(new GitHubStrategy({
   clientID: process.env.GITHUB_CLIENT_ID,
   clientSecret: process.env.GITHUB_CLIENT_SECRET,
@@ -59,54 +59,38 @@ passport.use(new GitHubStrategy({
       user = await User.create({
         provider: 'github',
         providerId: profile.id,
-        email: profile.emails && profile.emails[0] ? profile.emails[0].value : `${profile.username}@github.com`,
+        email: profile.emails?.[0]?.value || `${profile.username}@github.com`,
         name: profile.displayName || profile.username || 'GitHub User',
-        avatarUrl: profile.photos && profile.photos[0] ? profile.photos[0].value : '',
+        avatarUrl: profile.photos?.[0]?.value || '',
       });
     }
     return done(null, user);
-  } catch (err) {
-    return done(err, null);
-  }
+  } catch (err) { return done(err, null); }
 }));
 
 passport.serializeUser((user, done) => done(null, user.id));
 passport.deserializeUser((id, done) => User.findById(id).then(u => done(null, u)));
 
-// Routes
-app.get('/auth/google',
-  passport.authenticate('google', { scope: ['profile', 'email'] })
-);
+app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
 app.get('/auth/google/callback',
   passport.authenticate('google', { failureRedirect: `${process.env.CLIENT_URL}/auth?error=1` }),
   (req, res) => {
-    const token = jwt.sign(
-      { id: req.user._id, name: req.user.name, email: req.user.email },
-      process.env.JWT_SECRET,
-      { expiresIn: '7d' }
-    );
+    const token = jwt.sign({ id: req.user._id, name: req.user.name }, process.env.JWT_SECRET, { expiresIn: '7d' });
     res.redirect(`${process.env.CLIENT_URL}?token=${token}&name=${encodeURIComponent(req.user.name)}`);
   }
 );
 
-app.get('/auth/github',
-  passport.authenticate('github', { scope: ['user:email'] })
-);
+app.get('/auth/github', passport.authenticate('github', { scope: ['user:email'] }));
 
 app.get('/auth/github/callback',
   passport.authenticate('github', { failureRedirect: `${process.env.CLIENT_URL}/auth?error=1` }),
   (req, res) => {
-    const token = jwt.sign(
-      { id: req.user._id, name: req.user.name, email: req.user.email },
-      process.env.JWT_SECRET,
-      { expiresIn: '7d' }
-    );
+    const token = jwt.sign({ id: req.user._id, name: req.user.name }, process.env.JWT_SECRET, { expiresIn: '7d' });
     res.redirect(`${process.env.CLIENT_URL}?token=${token}&name=${encodeURIComponent(req.user.name)}`);
   }
 );
 
-// Ingestion Utilities (Multer)
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, './uploads/'),
   filename: (req, file, cb) => {
@@ -115,37 +99,25 @@ const storage = multer.diskStorage({
   }
 });
 
-const fileFilter = (req, file, cb) => {
-  const allowedTypes = /pdf|doc|docx|txt/;
-  const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-  const mimetype = allowedTypes.test(file.mimetype) || file.mimetype === 'application/msword' || file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-
-  if (extname && mimetype) {
-    return cb(null, true);
-  } else {
-    cb(new Error('Invalid file type. Only PDF, DOC, DOCX, and TXT files are allowed.'));
-  }
-};
-
 const upload = multer({
   storage,
-  limits: { fileSize: 25 * 1024 * 1024 }, // 25MB check
-  fileFilter
-});
-
-app.post('/analyze', upload.single('document'), (req, res, next) => {
-  try {
-    if (!req.file) throw new Error("No document uploaded");
-    res.json({ message: "File uploaded successfully", file: req.file });
-  } catch (err) {
-    next(err);
+  limits: { fileSize: 25 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = /pdf|doc|docx|txt/;
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    if (extname) return cb(null, true);
+    cb(new Error('Invalid file type. Only PDF, DOC, DOCX, and TXT allowed.'));
   }
 });
 
-// Error handling middleware
+app.post('/analyze', upload.single('document'), analyzeDocument);
+
+app.get('/', (req, res) => res.send("Legal Eyes Backend is Running..."));
+
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(err.status || 500).json({ error: err.message || 'Something went wrong!' });
+  res.status(err.status || 500).json({ error: err.message || 'Internal Server Error' });
 });
 
-app.listen(5000, () => console.log('Server running on port 5000'));
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
