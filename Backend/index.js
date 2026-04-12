@@ -11,6 +11,7 @@ import multer from 'multer';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import User from './model/user.js';
+import verifyToken from './middleware/auth.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -125,7 +126,7 @@ const fileFilter = (req, file, cb) => {
 
 const upload = multer({ storage, limits: { fileSize: 25 * 1024 * 1024 }, fileFilter });
 
-app.post('/analyze', upload.single('document'), (req, res, next) => {
+app.post('/analyze', verifyToken, upload.single('document'), (req, res, next) => {
   try {
     if (!req.file) throw new Error("No document uploaded");
     res.json({ message: "File uploaded successfully", file: req.file });
