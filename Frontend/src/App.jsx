@@ -42,7 +42,7 @@ export default function App() {
     localStorage.removeItem('lexsimple_user');
     showToast('Logged out.');
   }
-
+  return(
     <Router>
       <Navbar currentUser={currentUser} onLogout={handleLogout} />
 
