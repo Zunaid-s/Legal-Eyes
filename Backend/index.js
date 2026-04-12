@@ -16,10 +16,10 @@ const app = express();
 
 app.use(cors({ origin: process.env.CLIENT_URL, credentials: true }));
 app.use(express.json());
-app.use(session({ 
-  secret: 'lexsimple', 
-  resave: false, 
-  saveUninitialized: false 
+app.use(session({
+  secret: 'lexsimple',
+  resave: false,
+  saveUninitialized: false
 }));
 app.use(passport.initialize());
 app.use(passport.session());
@@ -98,6 +98,14 @@ const storage = multer.diskStorage({
     cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
   }
 });
+
+const fileFilter = (req, file, cb) => {
+  const allowedTypes = /pdf|doc|docx|txt/;
+  const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+  const mimetype = allowedTypes.test(file.mimetype) || file.mimetype === 'application/msword' || file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+  if (extname && mimetype) return cb(null, true);
+  else cb(new Error('Invalid file type. Only PDF, DOC, DOCX, and TXT files are allowed.'));
+};
 
 const upload = multer({
   storage,
