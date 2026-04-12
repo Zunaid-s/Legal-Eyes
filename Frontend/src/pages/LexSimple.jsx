@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import './LexSimple.css';
 
-const API = 'http://localhost:5000/';
+const API = 'http://localhost:5000';
 
 // ─── GOOGLE ICON ────────────────────────────────────────────────────────────
 const GoogleIcon = () => (
