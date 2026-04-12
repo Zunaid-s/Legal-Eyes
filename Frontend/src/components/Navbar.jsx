@@ -1,17 +1,28 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from 'react-router-dom';
 
-export default function Navbar() {
+export default function Navbar({ currentUser, onLogout }) {
+  const location = useLocation();
+  const path = location.pathname;
+
   return (
-    <div className="navbar bg-base-300 shadow-lg px-5">
-      <div className="flex-1">
-        <Link to="/" className="btn btn-ghost text-xl font-bold uppercase">Legal Eyes</Link>
+    <nav className="ls-nav">
+      <Link to="/" className="ls-nav-logo">
+        <span className="dot"></span>LexSimple
+      </Link>
+      <div className="ls-nav-links">
+        <Link to="/" className={path === '/' ? 'active' : ''}>Home</Link>
+        <Link to="/auth" className={path === '/auth' ? 'active' : ''}>
+          {currentUser ? currentUser.name.split(' ')[0] : 'Login'}
+        </Link>
+        <Link to="/upload" className={path === '/upload' ? 'active' : ''}>Upload</Link>
+        <Link to="/summary" className={path === '/summary' ? 'active' : ''}>Summary</Link>
+        <Link to="/about" className={path === '/about' ? 'active' : ''}>About</Link>
+        <Link to="/contact" className={path === '/contact' ? 'active' : ''}>Contact</Link>
+        {currentUser
+          ? <button onClick={onLogout}>Logout</button>
+          : <Link to="/auth" className="ls-nav-cta">Get Started</Link>
+        }
       </div>
-      <div className="flex-none">
-        <ul className="menu menu-horizontal px-1 font-semibold">
-          <li><Link to="/upload">Upload</Link></li>
-          <li><Link to="/contact">Contact</Link></li>
-        </ul>
-      </div>
-    </div>
+    </nav>
   );
 }
