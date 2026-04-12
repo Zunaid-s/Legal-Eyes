@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import './LexSimple.css';
 
-const API = 'https://legal-ai-livid-six.vercel.app';
+const API = 'http://localhost:5000/';
 
 // ─── GOOGLE ICON ────────────────────────────────────────────────────────────
 const GoogleIcon = () => (
