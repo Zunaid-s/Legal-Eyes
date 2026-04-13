@@ -20,6 +20,7 @@ const analyzeDocument = async (req, res) => {
   } catch (err) {
     return res.status(400).json({ error: "Invalid documentId" });
   }
+  
   if (!document.textContent) {
     return res.status(400).json({ error: "Document has no text content to analyze" });
   }
@@ -27,7 +28,6 @@ const analyzeDocument = async (req, res) => {
   await Document.findByIdAndUpdate(documentId, { status: "PROCESSING" });
 
   try {
-   
     const geminiModel = genAI.getGenerativeModel({
       model: "gemini-1.5-flash",
       generationConfig: { responseMimeType: "application/json" },
@@ -47,11 +47,6 @@ const analyzeDocument = async (req, res) => {
           }
         ]
       }
-      Rules:
-      - severity must be exactly HIGH, MEDIUM, or LOW
-      - Return empty array if no problematic clauses found
-      - No extra fields allowed
-
       Legal Text:
       ${document.textContent}
     `;
@@ -75,11 +70,14 @@ const analyzeDocument = async (req, res) => {
         })
       )
     );
-
-    await Document.findByIdAndUpdate(documentId, { status: "COMPLETED" });
+    const clauseIds = savedClauses.map(c => c._id);
+    await Document.findByIdAndUpdate(documentId, { 
+      status: "COMPLETED",
+      $push: { problematicClauses: { $each: clauseIds } } 
+    });
 
     return res.status(200).json({
-      message: "Analysis complete",
+      message: "Analysis complete and mapped",
       documentId: document._id,
       status: "COMPLETED",
       totalClauses: savedClauses.length,
@@ -89,13 +87,28 @@ const analyzeDocument = async (req, res) => {
   } catch (error) {
     console.error("Analysis Error:", error);
     await Document.findByIdAndUpdate(documentId, { status: "FAILED" });
-
-    return res.status(500).json({
-      error: "Analysis failed",
-      documentId,
-      status: "FAILED",
-    });
+    return res.status(500).json({ error: "Analysis failed", documentId, status: "FAILED" });
   }
 };
 
-export default { analyzeDocument };
+const createAndMapClause = async (req, res) => {
+    try {
+        const { docId, text, reason, severity, suggestion } = req.body;
+        const newClause = await ProblematicClause.create({
+            originalClause: text,
+            issueDescription: reason,
+            suggestion: suggestion || "No suggestion provided",
+            severity: severity || "MEDIUM",
+            documentId: docId 
+        });
+        await Document.findByIdAndUpdate(docId, {
+            $push: { problematicClauses: newClause._id }
+        });
+
+        res.status(201).json({ message: "Clause created and linked successfully!", data: newClause });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+export default { analyzeDocument, createAndMapClause };
