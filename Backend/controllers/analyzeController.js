@@ -7,12 +7,10 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const analyzeDocument = async (req, res) => {
   const { documentId } = req.body;
 
-  // Step 1: Validate documentId
   if (!documentId) {
     return res.status(400).json({ error: "documentId is required" });
   }
 
-  // Step 2: Find the document in DB
   let document;
   try {
     document = await Document.findById(documentId);
@@ -22,17 +20,14 @@ const analyzeDocument = async (req, res) => {
   } catch (err) {
     return res.status(400).json({ error: "Invalid documentId" });
   }
-
-  // Step 3: Check document has text
   if (!document.textContent) {
     return res.status(400).json({ error: "Document has no text content to analyze" });
   }
 
-  // Step 4: Mark document as PROCESSING
   await Document.findByIdAndUpdate(documentId, { status: "PROCESSING" });
 
   try {
-    // Step 5: Call Gemini
+   
     const geminiModel = genAI.getGenerativeModel({
       model: "gemini-1.5-flash",
       generationConfig: { responseMimeType: "application/json" },
@@ -69,7 +64,6 @@ const analyzeDocument = async (req, res) => {
       throw new Error("Invalid response from Gemini");
     }
 
-    // Step 6: Save each clause to DB
     const savedClauses = await Promise.all(
       clauses.map((clause) =>
         ProblematicClause.create({
@@ -82,7 +76,6 @@ const analyzeDocument = async (req, res) => {
       )
     );
 
-    // Step 7: Mark document as COMPLETED
     await Document.findByIdAndUpdate(documentId, { status: "COMPLETED" });
 
     return res.status(200).json({
@@ -95,8 +88,6 @@ const analyzeDocument = async (req, res) => {
 
   } catch (error) {
     console.error("Analysis Error:", error);
-
-    // Mark document as FAILED
     await Document.findByIdAndUpdate(documentId, { status: "FAILED" });
 
     return res.status(500).json({
