@@ -11,6 +11,7 @@ import multer from 'multer';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import User from './model/user.js';
+import analyzeController from './controllers/analyzeController.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -106,7 +107,6 @@ app.get('/auth/github/callback',
   }
 );
 
-// Multer
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, './uploads/'),
   filename: (req, file, cb) => {
@@ -133,6 +133,8 @@ app.post('/analyze', upload.single('document'), (req, res, next) => {
     next(err);
   }
 });
+
+app.get('/api/v1/documents/:id/analysis', analyzeController.getDocumentAnalysis);
 
 app.use((err, req, res, next) => {
   console.error(err.stack);

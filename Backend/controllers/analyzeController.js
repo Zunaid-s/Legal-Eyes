@@ -59,17 +59,16 @@ const analyzeDocument = async (req, res) => {
       throw new Error("Invalid response from Gemini");
     }
 
-    const savedClauses = await Promise.all(
-      clauses.map((clause) =>
-        ProblematicClause.create({
-          documentId: document._id,
-          originalClause: clause.originalClause,
-          issueDescription: clause.issueDescription,
-          suggestion: clause.suggestion,
-          severity: clause.severity,
-        })
-      )
-    );
+    const clauseRecords = clauses.map((clause) => ({
+      documentId: document._id,
+      originalClause: clause.originalClause,
+      issueDescription: clause.issueDescription,
+      suggestion: clause.suggestion,
+      severity: clause.severity || "MEDIUM",
+    }));
+
+    // B3: Load the Gemini array securely into Mongoose
+    const savedClauses = await ProblematicClause.insertMany(clauseRecords);
     const clauseIds = savedClauses.map(c => c._id);
     await Document.findByIdAndUpdate(documentId, { 
       status: "COMPLETED",
@@ -111,4 +110,21 @@ const createAndMapClause = async (req, res) => {
     }
 };
 
-export default { analyzeDocument, createAndMapClause };
+const getDocumentAnalysis = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const document = await Document.findById(id);
+        if (!document) {
+            return res.status(404).json({ error: "Document not found" });
+        }
+        
+        // B2: Grab the Problematic clauses mapped to the requested document
+        const clauses = await ProblematicClause.find({ documentId: id });
+        return res.status(200).json({ document, clauses });
+    } catch (error) {
+        console.error("Polling Error:", error);
+        return res.status(500).json({ error: "Failed to retrieve analysis", details: error.message });
+    }
+};
+
+export default { analyzeDocument, createAndMapClause, getDocumentAnalysis };
