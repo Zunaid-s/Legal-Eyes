@@ -26,4 +26,3 @@ export default function Navbar({ currentUser, onLogout }) {
     </nav>
   );
 }
-

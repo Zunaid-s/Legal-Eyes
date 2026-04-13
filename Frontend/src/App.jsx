@@ -1,4 +1,3 @@
-
 import { useState, useRef } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
@@ -12,6 +11,7 @@ import Toast from './components/Toast';
 // Pages
 import Home from './pages/Home';
 import Auth from './pages/Auth';
+import OAuthCallback from './pages/OAuthCallback';
 import UploadPage from './pages/UploadPage';
 import Summary from './pages/Summary';
 import About from './pages/About';
@@ -42,17 +42,19 @@ export default function App() {
     localStorage.removeItem('lexsimple_user');
     showToast('Logged out.');
   }
-  return(
+
+  return (
     <Router>
       <Navbar currentUser={currentUser} onLogout={handleLogout} />
 
       <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/auth" element={<Auth onLogin={handleLogin} showToast={showToast} />} />
-        <Route path="/upload" element={<UploadPage authToken={authToken} showToast={showToast} onAnalysisComplete={setAnalysisData} />} />
-        <Route path="/summary" element={<Summary analysisData={analysisData} />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/contact" element={<ContactPage showToast={showToast} />} />
+        <Route path="/"               element={<Home />} />
+        <Route path="/auth"           element={<Auth onLogin={handleLogin} showToast={showToast} />} />
+        <Route path="/oauth-callback" element={<OAuthCallback onLogin={handleLogin} />} />
+        <Route path="/upload"         element={<UploadPage authToken={authToken} showToast={showToast} onAnalysisComplete={setAnalysisData} />} />
+        <Route path="/summary"        element={<Summary analysisData={analysisData} />} />
+        <Route path="/about"          element={<About />} />
+        <Route path="/contact"        element={<ContactPage showToast={showToast} />} />
       </Routes>
 
       <Toast message={toast.msg} show={toast.show} />

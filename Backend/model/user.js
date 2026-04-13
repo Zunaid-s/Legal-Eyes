@@ -1,4 +1,5 @@
-import { Schema, model } from "mongoose";
+import { Schema, model } from 'mongoose';
+
 const userSchema = new Schema({
     provider: { type: String, required: true },
     providerId: { type: String, required: true },
