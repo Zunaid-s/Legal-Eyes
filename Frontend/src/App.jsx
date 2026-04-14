@@ -14,14 +14,15 @@ import Auth from './pages/Auth';
 import OAuthCallback from './pages/OAuthCallback';
 import UploadPage from './pages/UploadPage';
 import Summary from './pages/Summary';
+import History from './pages/History';
 import About from './pages/About';
 import ContactPage from './pages/ContactPage';
 
 export default function App() {
-  const [authToken, setAuthToken] = useState(() => localStorage.getItem('lexsimple_token'));
+  const [authToken, setAuthToken]     = useState(() => localStorage.getItem('lexsimple_token'));
   const [currentUser, setCurrentUser] = useState(() => JSON.parse(localStorage.getItem('lexsimple_user') || 'null'));
   const [analysisData, setAnalysisData] = useState(null);
-  const [toast, setToast] = useState({ msg: '', show: false });
+  const [toast, setToast]             = useState({ msg: '', show: false });
   const toastTimer = useRef(null);
 
   function showToast(msg) {
@@ -53,6 +54,7 @@ export default function App() {
         <Route path="/oauth-callback" element={<OAuthCallback onLogin={handleLogin} />} />
         <Route path="/upload"         element={<UploadPage authToken={authToken} showToast={showToast} onAnalysisComplete={setAnalysisData} />} />
         <Route path="/summary"        element={<Summary analysisData={analysisData} />} />
+        <Route path="/history"        element={<History authToken={authToken} onLoadSummary={setAnalysisData} />} />
         <Route path="/about"          element={<About />} />
         <Route path="/contact"        element={<ContactPage showToast={showToast} />} />
       </Routes>
@@ -61,4 +63,3 @@ export default function App() {
     </Router>
   );
 }
-
