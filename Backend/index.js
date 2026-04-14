@@ -25,12 +25,10 @@ app.use(session({ secret: 'lexsimple', resave: false, saveUninitialized: false }
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Connect MongoDB
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('MongoDB connected'))
   .catch(err => console.log(err));
 
-// Google Strategy
 passport.use(new GoogleStrategy({
   clientID: process.env.GOOGLE_CLIENT_ID,
   clientSecret: process.env.GOOGLE_CLIENT_SECRET,
@@ -53,7 +51,6 @@ passport.use(new GoogleStrategy({
   }
 }));
 
-// GitHub Strategy
 passport.use(new GitHubStrategy({
   clientID: process.env.GITHUB_CLIENT_ID,
   clientSecret: process.env.GITHUB_CLIENT_SECRET,
@@ -79,7 +76,6 @@ passport.use(new GitHubStrategy({
 passport.serializeUser((user, done) => done(null, user.id));
 passport.deserializeUser((id, done) => User.findById(id).then(u => done(null, u)));
 
-// Auth Routes
 app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
 app.get('/auth/google/callback',
@@ -108,7 +104,6 @@ app.get('/auth/github/callback',
   }
 );
 
-// Multer
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, './uploads/'),
   filename: (req, file, cb) => {
@@ -127,11 +122,9 @@ const fileFilter = (req, file, cb) => {
 
 const upload = multer({ storage, limits: { fileSize: 25 * 1024 * 1024 }, fileFilter });
 
-// API Routes
 app.post('/api/v1/analyze', verifyToken, upload.single('document'), analyzeController.analyzeDocument);
 app.get('/api/v1/documents/:id/analysis', verifyToken, analyzeController.getDocumentAnalysis);
 
-// Error Handler
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(err.status || 500).json({ error: err.message || 'Something went wrong!' });
