@@ -1,41 +1,58 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
-import Document from "../model/Document.js";
-import ProblematicClause from "../model/ProblematicClause.js";
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import Document from '../model/Document.js';
+import ProblematicClause from '../model/ProblematicClause.js';
+import fs from 'fs';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-const analyzeDocument = async (req, res) => {
-  const { documentId } = req.body;
-
-  if (!documentId) {
-    return res.status(400).json({ error: "documentId is required" });
-  }
-
-  let document;
+// ✅ Gemini quota and downtime guard
+const geminiGuard = async (fn) => {
   try {
-    document = await Document.findById(documentId);
-    if (!document) {
-      return res.status(404).json({ error: "Document not found" });
+    return await fn();
+  } catch (error) {
+    const msg = error?.message?.toLowerCase() || '';
+    const status = error?.status;
+    const timestamp = new Date().toISOString();
+
+    if (status === 429 || msg.includes('quota') || msg.includes('rate limit') || msg.includes('resource_exhausted')) {
+      console.error(`[${timestamp}] ⚠️ Gemini QUOTA exceeded:`, error.message);
+      throw { type: 'QUOTA_EXCEEDED', status: 429, message: 'Gemini API quota exceeded. Please try again later.' };
     }
-  } catch (err) {
-    return res.status(400).json({ error: "Invalid documentId" });
-  }
-  if (!document.textContent) {
-    return res.status(400).json({ error: "Document has no text content to analyze" });
-  }
+    if (status === 503 || status === 500 || msg.includes('unavailable') || msg.includes('overloaded')) {
+      console.error(`[${timestamp}] 🔴 Gemini SERVICE DOWN:`, error.message);
+      throw { type: 'SERVICE_UNAVAILABLE', status: 503, message: 'Gemini is currently unavailable. Please try again shortly.' };
+    }
 
-  await Document.findByIdAndUpdate(documentId, { status: "PROCESSING" });
+    console.error(`[${timestamp}] ❌ Gemini unknown error:`, error.message);
+    throw error;
+  }
+};
 
+const analyzeDocument = async (req, res) => {
   try {
-   
-    const geminiModel = genAI.getGenerativeModel({
-      model: "gemini-1.5-flash",
-      generationConfig: { responseMimeType: "application/json" },
+    const file = req.file;
+    if (!file) return res.status(400).json({ error: 'Document file is required' });
+
+    const userId = req.user?.id || req.user?._id || '000000000000000000000000';
+
+    const documentRecord = await Document.create({
+      filename: file.originalname,
+      userId,
+      status: 'PROCESSING'
+    });
+
+    // Read file as base64
+    const fileData = fs.readFileSync(file.path);
+    const base64Data = fileData.toString('base64');
+
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-2.0-flash',
+      generationConfig: { responseMimeType: 'application/json' }
     });
 
     const prompt = `
       You are a legal document analyzer.
-      Analyze the following legal text and identify all problematic clauses.
+      Analyze the following legal document and identify all problematic clauses for a common person.
       Return response strictly in this JSON format:
       {
         "problematicClauses": [
@@ -51,23 +68,29 @@ const analyzeDocument = async (req, res) => {
       - severity must be exactly HIGH, MEDIUM, or LOW
       - Return empty array if no problematic clauses found
       - No extra fields allowed
-
-      Legal Text:
-      ${document.textContent}
     `;
 
-    const result = await geminiModel.generateContent(prompt);
+    const result = await geminiGuard(() =>
+      model.generateContent([
+        prompt,
+        {
+          inlineData: {
+            data: base64Data,
+            mimeType: file.mimetype
+          }
+        }
+      ])
+    );
+
     const parsed = JSON.parse(result.response.text());
     const clauses = parsed.problematicClauses;
 
-    if (!Array.isArray(clauses)) {
-      throw new Error("Invalid response from Gemini");
-    }
+    if (!Array.isArray(clauses)) throw new Error('Invalid response from Gemini');
 
     const savedClauses = await Promise.all(
-      clauses.map((clause) =>
+      clauses.map(clause =>
         ProblematicClause.create({
-          documentId: document._id,
+          documentId: documentRecord._id,
           originalClause: clause.originalClause,
           issueDescription: clause.issueDescription,
           suggestion: clause.suggestion,
@@ -76,25 +99,23 @@ const analyzeDocument = async (req, res) => {
       )
     );
 
-    await Document.findByIdAndUpdate(documentId, { status: "COMPLETED" });
+    documentRecord.status = 'COMPLETED';
+    documentRecord.problematicClauses = savedClauses.map(c => c._id);
+    await documentRecord.save();
 
     return res.status(200).json({
-      message: "Analysis complete",
-      documentId: document._id,
-      status: "COMPLETED",
+      message: 'Analysis complete',
+      documentId: documentRecord._id,
+      status: 'COMPLETED',
       totalClauses: savedClauses.length,
       problematicClauses: savedClauses,
     });
 
   } catch (error) {
-    console.error("Analysis Error:", error);
-    await Document.findByIdAndUpdate(documentId, { status: "FAILED" });
-
-    return res.status(500).json({
-      error: "Analysis failed",
-      documentId,
-      status: "FAILED",
-    });
+    console.error('Analysis Error:', error);
+    if (error.type === 'QUOTA_EXCEEDED') return res.status(429).json({ error: error.message });
+    if (error.type === 'SERVICE_UNAVAILABLE') return res.status(503).json({ error: error.message });
+    return res.status(500).json({ error: 'Analysis failed', details: error.message });
   }
 };
 

@@ -1,5 +1,4 @@
-import { Schema, model } from 'mongoose';
-
+const { Schema, model } = require('mongoose');
 const clauseSchema = new Schema({
     documentId: { type: Schema.Types.ObjectId, ref: 'Document', required: true },
     originalClause: { type: String, required: true },
@@ -8,4 +7,4 @@ const clauseSchema = new Schema({
     severity: { type: String, enum: ['HIGH', 'MEDIUM', 'LOW'], required: true }
 }, { timestamps: true });
 
-export default model('ProblematicClause', clauseSchema);
+module.exports = model('ProblematicClause', clauseSchema);
