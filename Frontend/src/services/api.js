@@ -1,5 +1,5 @@
 
-const BASE_URL = 'https://legal-ai-livid-six.vercel.app';
+const BASE_URL = 'http://localhost:5000';
 
 export const loginUser = async (email, password) => {
   const res = await fetch(`${BASE_URL}/auth/login`, {
