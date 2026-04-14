@@ -379,3 +379,35 @@ body {
   .ls-nav-links { gap: 2px; }
   .ls-nav-links a, .ls-nav-links button { padding: 6px 8px; font-size: 12px; }
 }
+/* ---- HISTORY PAGE ---- */
+
+.ls-history-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.ls-history-card {
+  background: var(--white);
+  border: 1px solid var(--parchment-3);
+  border-radius: 16px;
+  padding: 24px;
+  transition: transform 0.2s, box-shadow 0.2s;
+  animation: lsCardIn 0.4s ease both;
+}
+
+.ls-history-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.07);
+}
+
+@keyframes lsCardIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 768px) {
+  .ls-history-grid {
+    grid-template-columns: 1fr;
+  }
+}
