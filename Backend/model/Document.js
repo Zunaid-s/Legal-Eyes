@@ -1,26 +1,10 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const DocumentSchema = new mongoose.Schema({
-    title: {
-        type: String,
-        required: true
-    },
-    content: {
-        type: String,
-        required: true
-    },
-    
-    problematicClauses: [
-        {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'ProblematicClause'        
-        }
-    ],
+  filename: { type: String, required: true },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  status: { type: String, enum: ['PENDING', 'PROCESSING', 'COMPLETED', 'FAILED'], default: 'PENDING' },
+  problematicClauses: [{ type: mongoose.Schema.Types.ObjectId, ref: 'ProblematicClause' }]
+}, { timestamps: true });
 
-    createdAt: {
-        type: Date,
-        default: Date.now
-    }
-});
-
-module.exports = mongoose.model('Document', DocumentSchema);
+export default mongoose.model('Document', DocumentSchema);

@@ -12,6 +12,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import User from './model/user.js';
 import analyzeController from './controllers/analyzeController.js';
+import verifyToken from './middleware/auth.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -78,7 +79,7 @@ passport.use(new GitHubStrategy({
 passport.serializeUser((user, done) => done(null, user.id));
 passport.deserializeUser((id, done) => User.findById(id).then(u => done(null, u)));
 
-// Routes
+// Auth Routes
 app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
 app.get('/auth/google/callback',
@@ -107,6 +108,7 @@ app.get('/auth/github/callback',
   }
 );
 
+// Multer
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, './uploads/'),
   filename: (req, file, cb) => {
@@ -125,17 +127,10 @@ const fileFilter = (req, file, cb) => {
 
 const upload = multer({ storage, limits: { fileSize: 25 * 1024 * 1024 }, fileFilter });
 
-app.post('/analyze', upload.single('document'), (req, res, next) => {
-  try {
-    if (!req.file) throw new Error("No document uploaded");
-    res.json({ message: "File uploaded successfully", file: req.file });
-  } catch (err) {
-    next(err);
-  }
-});
+// API Routes
+app.post('/api/v1/analyze', verifyToken, upload.single('document'), analyzeController.analyzeDocument);
 
-app.get('/api/v1/documents/:id/analysis', analyzeController.getDocumentAnalysis);
-
+// Error Handler
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(err.status || 500).json({ error: err.message || 'Something went wrong!' });

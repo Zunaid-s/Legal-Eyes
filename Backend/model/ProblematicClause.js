@@ -1,14 +1,11 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const ProblematicClauseSchema = new mongoose.Schema({
-    clauseText: String,
-    issue: String,
+  documentId: { type: mongoose.Schema.Types.ObjectId, ref: 'Document', required: true },
+  originalClause: { type: String, required: true },
+  issueDescription: { type: String, required: true },
+  suggestion: { type: String, required: true },
+  severity: { type: String, enum: ['HIGH', 'MEDIUM', 'LOW'], required: true }
+}, { timestamps: true });
 
-    documentId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Document',
-        required: true
-    }
-});
-
-module.exports = mongoose.model('ProblematicClause', ProblematicClauseSchema);
+export default mongoose.model('ProblematicClause', ProblematicClauseSchema);
