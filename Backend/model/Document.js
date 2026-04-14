@@ -1,10 +1,10 @@
-import mongoose from 'mongoose';
+import { Schema, model } from 'mongoose';
 
-const DocumentSchema = new mongoose.Schema({
+const DocumentSchema = new Schema({
   filename: { type: String, required: true },
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   status: { type: String, enum: ['PENDING', 'PROCESSING', 'COMPLETED', 'FAILED'], default: 'PENDING' },
-  problematicClauses: [{ type: mongoose.Schema.Types.ObjectId, ref: 'ProblematicClause' }]
+  problematicClauses: [{ type: Schema.Types.ObjectId, ref: 'ProblematicClause' }]
 }, { timestamps: true });
 
-export default mongoose.model('Document', DocumentSchema);
+export default model('Document', DocumentSchema);
