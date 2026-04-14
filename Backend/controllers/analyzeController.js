@@ -119,4 +119,32 @@ const analyzeDocument = async (req, res) => {
   }
 };
 
-export default { analyzeDocument };
+const getDocumentAnalysis = async (req, res) => {
+  try {
+    const documentId = req.params.id;
+    const document = await Document.findById(documentId);
+    
+    if (!document) {
+      return res.status(404).json({ error: 'Document not found' });
+    }
+
+    const userId = req.user?.id || req.user?._id || '000000000000000000000000';
+    if (document.userId.toString() !== userId.toString() && userId !== '000000000000000000000000') {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    const clauses = await ProblematicClause.find({ documentId });
+    
+    return res.status(200).json({
+      documentId: document._id,
+      filename: document.filename,
+      status: document.status,
+      problematicClauses: clauses
+    });
+  } catch (error) {
+    console.error('Fetch Analysis Error:', error);
+    return res.status(500).json({ error: 'Failed to fetch analysis', details: error.message });
+  }
+};
+
+export default { analyzeDocument, getDocumentAnalysis };

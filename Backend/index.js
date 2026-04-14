@@ -129,6 +129,7 @@ const upload = multer({ storage, limits: { fileSize: 25 * 1024 * 1024 }, fileFil
 
 // API Routes
 app.post('/api/v1/analyze', verifyToken, upload.single('document'), analyzeController.analyzeDocument);
+app.get('/api/v1/documents/:id/analysis', verifyToken, analyzeController.getDocumentAnalysis);
 
 // Error Handler
 app.use((err, req, res, next) => {
