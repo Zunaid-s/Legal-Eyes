@@ -1,15 +1,15 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-
-const API = 'https://legal-ai-livid-six.vercel.app';
+import axios from 'axios';
+import BASE_URL from '../services/api';
 
 const ANALYSIS_OPTIONS = [
-  { label: 'Plain-language summary', value: 'summary', defaultChecked: true },
-  { label: 'Risk & flag detection', value: 'risks', defaultChecked: true },
-  { label: 'Key dates extraction', value: 'dates', defaultChecked: true },
-  { label: 'Party obligations', value: 'obligations', defaultChecked: true },
-  { label: 'Comparison with templates', value: 'comparison', defaultChecked: false },
-  { label: 'Export formatted report', value: 'export', defaultChecked: false },
+  { label: 'Plain-language summary',   value: 'summary',     defaultChecked: true  },
+  { label: 'Risk & flag detection',    value: 'risks',       defaultChecked: true  },
+  { label: 'Key dates extraction',     value: 'dates',       defaultChecked: true  },
+  { label: 'Party obligations',        value: 'obligations', defaultChecked: true  },
+  { label: 'Comparison with templates',value: 'comparison',  defaultChecked: false },
+  { label: 'Export formatted report',  value: 'export',      defaultChecked: false },
 ];
 
 export default function UploadPage({ authToken, showToast, onAnalysisComplete }) {
@@ -71,36 +71,39 @@ export default function UploadPage({ authToken, showToast, onAnalysisComplete })
     }, 1200);
 
     try {
-      const selected = Object.entries(checkedOptions).filter(([, v]) => v).map(([k]) => k);
+      const selected = Object.entries(checkedOptions)
+        .filter(([, v]) => v)
+        .map(([k]) => k);
+
       const formData = new FormData();
       formData.append('document', currentFile);
       formData.append('options', JSON.stringify(selected));
 
-      const res = await fetch(`${API}/analyze`, {
-        method: 'POST',
-        headers: { Authorization: 'Bearer ' + authToken },
-        body: formData,
+      // ── POST to /analyse using axios ─────────────────────────────────────
+      const res = await axios.post(`${BASE_URL}/analyse`, formData, {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+          'Content-Type': 'multipart/form-data',
+        },
       });
 
       clearInterval(fakeTimer);
-      const data = await res.json();
-
-      if (!res.ok) {
-        setAnalyzing(false);
-        return showToast(data.error || 'Analysis failed.');
-      }
+      const data = res.data;
 
       setProgress(100);
       setProgressStep('Analysis complete!');
+
       setTimeout(() => {
         setAnalyzing(false);
         onAnalysisComplete(data);
         navigate('/summary');
       }, 700);
-    } catch {
+
+    } catch (err) {
       clearInterval(fakeTimer);
       setAnalyzing(false);
-      showToast('Cannot reach server. Is the backend running?');
+      const msg = err.response?.data?.error || 'Cannot reach server. Is the backend running?';
+      showToast(msg);
     }
   }
 
@@ -116,7 +119,12 @@ export default function UploadPage({ authToken, showToast, onAnalysisComplete })
           onClick={() => fileInputRef.current?.click()}
           onDragOver={e => { e.preventDefault(); setIsDragging(true); }}
           onDragLeave={() => setIsDragging(false)}
-          onDrop={e => { e.preventDefault(); setIsDragging(false); const f = e.dataTransfer.files[0]; if (f) handleFile(f); }}
+          onDrop={e => {
+            e.preventDefault();
+            setIsDragging(false);
+            const f = e.dataTransfer.files[0];
+            if (f) handleFile(f);
+          }}
         >
           <input
             ref={fileInputRef}
@@ -167,9 +175,14 @@ export default function UploadPage({ authToken, showToast, onAnalysisComplete })
           </div>
         </div>
 
+        {/* Submit button → calls /analyse */}
         <div className="ls-analyze-btn-wrap">
-          <button className="ls-analyze-btn" disabled={!currentFile} onClick={startAnalysis}>
-            Analyze Document <span>→</span>
+          <button
+            className="ls-analyze-btn"
+            disabled={!currentFile || analyzing}
+            onClick={startAnalysis}
+          >
+            {analyzing ? 'Analyzing...' : 'Analyze Document'} <span>→</span>
           </button>
         </div>
       </div>
