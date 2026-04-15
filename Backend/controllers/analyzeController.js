@@ -28,6 +28,28 @@ const geminiGuard = async (fn) => {
   }
 };
 
+const getUserDocuments = async (req, res) => {
+  try {
+    const userId = req.user?.id || req.user?._id;
+    if (!userId) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+    const documents = await Document.find({ userId }).sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      count: documents.length,
+      data: documents,
+    });
+  } catch (error) {
+    console.error("Fetch History Error:", error);
+    return res.status(500).json({
+      success: false,
+      error: "Previous documents fetch karne mein error aaya",
+    });
+  }
+};
+
 const analyzeDocument = async (req, res) => {
   try {
     const file = req.file;
@@ -143,4 +165,4 @@ const getDocumentAnalysis = async (req, res) => {
   }
 };
 
-export default { analyzeDocument, getDocumentAnalysis };
+export default { analyzeDocument, getDocumentAnalysis, getUserDocuments };
