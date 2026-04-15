@@ -4,6 +4,25 @@ import ProblematicClause from "../model/ProblematicClause.js";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
+const getUserDocuments = async (req, res) => {
+  try {
+    const userId = req.user.id; 
+    const documents = await Document.find({ user: userId }).sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      count: documents.length,
+      data: documents,
+    });
+  } catch (error) {
+    console.error("Fetch History Error:", error);
+    return res.status(500).json({
+      success: false,
+      error: "Previous documents fetch karne mein error aaya",
+    });
+  }
+};
+
 const analyzeDocument = async (req, res) => {
   const { documentId } = req.body;
 
@@ -20,6 +39,7 @@ const analyzeDocument = async (req, res) => {
   } catch (err) {
     return res.status(400).json({ error: "Invalid documentId" });
   }
+  
   if (!document.textContent) {
     return res.status(400).json({ error: "Document has no text content to analyze" });
   }
@@ -27,7 +47,6 @@ const analyzeDocument = async (req, res) => {
   await Document.findByIdAndUpdate(documentId, { status: "PROCESSING" });
 
   try {
-   
     const geminiModel = genAI.getGenerativeModel({
       model: "gemini-1.5-flash",
       generationConfig: { responseMimeType: "application/json" },
@@ -47,11 +66,6 @@ const analyzeDocument = async (req, res) => {
           }
         ]
       }
-      Rules:
-      - severity must be exactly HIGH, MEDIUM, or LOW
-      - Return empty array if no problematic clauses found
-      - No extra fields allowed
-
       Legal Text:
       ${document.textContent}
     `;
@@ -97,5 +111,4 @@ const analyzeDocument = async (req, res) => {
     });
   }
 };
-
-export default { analyzeDocument };
+export default { analyzeDocument, getUserDocuments };
