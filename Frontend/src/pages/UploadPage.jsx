@@ -4,12 +4,12 @@ import axios from 'axios';
 import BASE_URL from '../services/api';
 
 const ANALYSIS_OPTIONS = [
-  { label: 'Plain-language summary',   value: 'summary',     defaultChecked: true  },
-  { label: 'Risk & flag detection',    value: 'risks',       defaultChecked: true  },
-  { label: 'Key dates extraction',     value: 'dates',       defaultChecked: true  },
-  { label: 'Party obligations',        value: 'obligations', defaultChecked: true  },
-  { label: 'Comparison with templates',value: 'comparison',  defaultChecked: false },
-  { label: 'Export formatted report',  value: 'export',      defaultChecked: false },
+  { label: 'Plain-language summary', value: 'summary', defaultChecked: true },
+  { label: 'Risk & flag detection', value: 'risks', defaultChecked: true },
+  { label: 'Key dates extraction', value: 'dates', defaultChecked: true },
+  { label: 'Party obligations', value: 'obligations', defaultChecked: true },
+  { label: 'Comparison with templates', value: 'comparison', defaultChecked: false },
+  { label: 'Export formatted report', value: 'export', defaultChecked: false },
 ];
 
 export default function UploadPage({ authToken, showToast, onAnalysisComplete }) {
@@ -80,10 +80,9 @@ export default function UploadPage({ authToken, showToast, onAnalysisComplete })
       formData.append('options', JSON.stringify(selected));
 
       // ── POST to /analyse using axios ─────────────────────────────────────
-      const res = await axios.post(`${BASE_URL}/analyze`, formData, {
+      const res = await axios.post(`${BASE_URL}/api/v1/analyze`, formData, {
         headers: {
-          Authorization: `Bearer ${authToken}`,
-          'Content-Type': 'multipart/form-data',
+          Authorization: `Bearer ${authToken}`
         },
       });
 
@@ -157,8 +156,6 @@ export default function UploadPage({ authToken, showToast, onAnalysisComplete })
             </div>
           );
         })()}
-
-        
 
         {/* Submit button → calls /analyse */}
         <div className="ls-analyze-btn-wrap">
