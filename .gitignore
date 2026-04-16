@@ -4,4 +4,4 @@ Backend/LegalEyes/src/test
 .vscode
 Backend/.idea/
 Backend/.env
-Backend/uploads
+Backend/uploads/
