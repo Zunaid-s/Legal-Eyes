@@ -20,7 +20,7 @@ export default function Home() {
             English.
           </h1>
           <p className="ls-hero-subtitle">
-            Upload any contract, lease, or legal agreement. LexSimple translates
+            Upload any contract, lease, or legal agreement. legal-eyes translates
             complex legal language into clear summaries anyone can understand — in seconds.
           </p>
           <div className="ls-hero-btns">
@@ -29,7 +29,7 @@ export default function Home() {
           </div>
           <div className="ls-hero-stats">
             <div><div className="ls-stat-num">98%</div><div className="ls-stat-label">Accuracy rate</div></div>
-            <div><div className="ls-stat-num">45k+</div><div className="ls-stat-label">Documents analyzed</div></div>
+            <div><div className="ls-stat-num">100+</div><div className="ls-stat-label">Documents analyzed</div></div>
             <div><div className="ls-stat-num">12s</div><div className="ls-stat-label">Average analysis time</div></div>
           </div>
         </div>
@@ -56,7 +56,7 @@ export default function Home() {
           <div className="ls-section-label">What We Simplify</div>
           <h2 className="ls-section-title">Every legal document,<br /><em>decoded</em></h2>
           <p className="ls-section-sub">
-            From NDAs to rental agreements — LexSimple handles all common legal document
+            From NDAs to rental agreements — legal-eyes handles all common legal document
             types with high accuracy and nuance.
           </p>
         </div>

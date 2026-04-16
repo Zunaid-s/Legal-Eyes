@@ -19,6 +19,8 @@ const BASE_URL = 'http://localhost:5000';
 //   return res.json();
 // };
 
+
+// uploading document
 export const uploadDocument = async (formData, token) => {
   const res = await fetch(`${BASE_URL}/analyze`, {
     method: 'POST',
@@ -28,6 +30,7 @@ export const uploadDocument = async (formData, token) => {
   return res.json();
 };
 
+// retreival of problematic clauses
 export const getDocumentAnalysis = async (documentId, token) => {
   const res = await fetch(`${BASE_URL}/api/v1/documents/${documentId}/analysis`, {
     method: 'GET',
@@ -36,6 +39,8 @@ export const getDocumentAnalysis = async (documentId, token) => {
   return res.json();
 };
 
+
+// authorization apis
 export const getGoogleAuthURL = () => `${BASE_URL}/auth/google`;
 export const getGitHubAuthURL = () => `${BASE_URL}/auth/github`;
 

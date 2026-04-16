@@ -11,17 +11,17 @@ export default function About() {
         <div className="ls-about-hero">
           <div>
             <h1>We believe <em>everyone</em> deserves to understand what they sign.</h1>
-            <p>LexSimple was built out of frustration — the kind you feel when a landlord shoves a 20-page lease at you and says "just sign here." Legal documents shouldn't require a law degree to understand. We're fixing that.</p>
+            <p>legal-eyes was built out of frustration — the kind you feel when a landlord shoves a 20-page lease at you and says "just sign here." Legal documents shouldn't require a law degree to understand. We're fixing that.</p>
             <br />
-            <p>Founded in 2024, we've helped over 45,000 people understand their contracts, leases, employment agreements, and more — before they signed them.</p>
+            <p>Founded in 2024, we've helped many people understand their contracts, leases, employment agreements, and more — before they signed them.</p>
             <br />
             <button className="ls-btn-primary" onClick={() => navigate('/upload')}>Try It Now</button>
           </div>
           <div className="ls-about-visual">
             {[
-              ['45,000+', 'Documents simplified for everyday people across India'],
-              ['₹0', 'Cost to analyze your first 3 documents — free forever'],
-              ['12 sec', 'Average time from upload to full plain-English summary'],
+              [, 'Documents simplified for everyday people across India'],
+              [, 'Cost to analyze your documents — free forever'],
+              [, 'Average time from upload to full plain-English summary is 12 sec'],
             ].map(([num, desc]) => (
               <div className="ls-mission-stat" key={num}>
                 <div className="ls-mission-num">{num}</div>
@@ -48,7 +48,7 @@ export default function About() {
 
         {/* Team */}
         <div className="ls-team-section">
-          <h2>The team behind LexSimple</h2>
+          <h2>The team behind Legal-eyes</h2>
           <p>A small team of engineers, lawyers, and designers who care deeply about legal literacy.</p>
           <div className="ls-team-grid">
             {[

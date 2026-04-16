@@ -37,9 +37,9 @@ export default function ContactPage({ showToast }) {
           <p>Have a question about a document type, a billing issue, or just want to share feedback? We read every message and reply within one business day.</p>
           <div className="ls-contact-info">
             {[
-              ['✉️', 'Email', 'hello@lexsimple.in'],
-              ['📍', 'Office', 'mera flat'],
-              ['🕐', 'Response time', 'lunch ke baad aana'],
+              ['✉️', 'Email', 'hello@legal-eyes.in'],
+              ['📍', 'Office', 'greater noida'],
+              ['🕐', 'Response time', 'in one day'],
             ].map(([icon, title, val]) => (
               <div className="ls-contact-item" key={title}>
                 <div className="ls-contact-item-icon">{icon}</div>
@@ -52,33 +52,9 @@ export default function ContactPage({ showToast }) {
           </div>
         </div>
 
-        {/* Form */}
-        <div className="ls-contact-form">
-          <h2>Send us a message</h2>
-          <div className="ls-form-group">
-            <label>Your name</label>
-            <input type="text" placeholder="Modi" value={name} onChange={e => setName(e.target.value)} />
-          </div>
-          <div className="ls-form-group">
-            <label>Email address</label>
-            <input type="email" placeholder="Modi@example.com" value={email} onChange={e => setEmail(e.target.value)} />
-          </div>
-          <div className="ls-form-group">
-            <label>Subject</label>
-            <input type="text" placeholder="Question about a document type..." value={subject} onChange={e => setSubject(e.target.value)} />
-          </div>
-          <div className="ls-form-group">
-            <label>Message</label>
-            <textarea placeholder="Tell us how we can help..." value={message} onChange={e => setMessage(e.target.value)} />
-          </div>
-          <button className="ls-form-submit" onClick={handleContact}>Send Message</button>
-          <div className={`ls-success-msg${success ? ' show' : ''}`}>
-            <span>✅</span>
-            <span>Message sent! We'll get back to you after lunch.</span>
-          </div>
-        </div>
-
       </div>
     </div>
   );
-}
+       
+  
+};

@@ -80,7 +80,7 @@ export default function UploadPage({ authToken, showToast, onAnalysisComplete })
       formData.append('options', JSON.stringify(selected));
 
       // ── POST to /analyse using axios ─────────────────────────────────────
-      const res = await axios.post(`${BASE_URL}/analyse`, formData, {
+      const res = await axios.post(`${BASE_URL}/analyze`, formData, {
         headers: {
           Authorization: `Bearer ${authToken}`,
           'Content-Type': 'multipart/form-data',
@@ -158,22 +158,7 @@ export default function UploadPage({ authToken, showToast, onAnalysisComplete })
           );
         })()}
 
-        {/* Options */}
-        <div className="ls-analyze-options">
-          <h3>Analysis options</h3>
-          <div className="ls-options-grid">
-            {ANALYSIS_OPTIONS.map(o => (
-              <label className="ls-option-check" key={o.value}>
-                <input
-                  type="checkbox"
-                  checked={!!checkedOptions[o.value]}
-                  onChange={e => setCheckedOptions(prev => ({ ...prev, [o.value]: e.target.checked }))}
-                />
-                <span>{o.label}</span>
-              </label>
-            ))}
-          </div>
-        </div>
+        
 
         {/* Submit button → calls /analyse */}
         <div className="ls-analyze-btn-wrap">

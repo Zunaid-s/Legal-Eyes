@@ -19,8 +19,8 @@ export default function OAuthCallback({ onLogin }) {
           : { name: 'User', email: '' };
 
         // Save to localStorage
-        localStorage.setItem('lexsimple_token', token);
-        localStorage.setItem('lexsimple_user', JSON.stringify(user));
+        localStorage.setItem('legal-eyes_token', token);
+        localStorage.setItem('legal-eyes_user', JSON.stringify(user));
 
         // Update app state
         onLogin({ token, user });

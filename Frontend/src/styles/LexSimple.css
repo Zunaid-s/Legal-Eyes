@@ -229,9 +229,9 @@ body {
 
 /* ---- AUTH PAGE ---- */
 .ls-auth-page { min-height: calc(100vh - 64px); display: flex; align-items: center; justify-content: center; padding: 40px 20px; }
-.ls-auth-container { width: 100%; max-width: 860px; display: grid; grid-template-columns: 1fr 1fr; background: var(--white); border-radius: 20px; border: 1px solid var(--parchment-3); overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.08); }
-.ls-auth-panel { padding: 52px 44px; }
-.ls-auth-panel.left { background: var(--ink); display: flex; flex-direction: column; justify-content: space-between; }
+.ls-auth-container { width: 100%; max-width: 480px; display: grid; grid-template-columns: 1fr; background: var(--ink); border-radius: 20px; border: 1px solid var(--parchment-3); overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.08);margin: 0 auto; }
+.ls-auth-panel { padding: 40px; }
+.ls-auth-panel.left { background: var(--ink); display: flex; flex-direction: column; justify-content: center; min-height: 450px; }
 .ls-auth-panel.left h2 { font-family: 'Cormorant Garamond', serif; font-size: 34px; font-weight: 300; color: var(--parchment); line-height: 1.2; }
 .ls-auth-panel.left h2 em { font-style: italic; color: var(--gold-light); }
 .ls-auth-panel.left p { font-size: 13px; color: var(--ink-3); margin-top: 14px; line-height: 1.7; }
@@ -349,12 +349,12 @@ body {
 .ls-team-card p { font-size: 12px; color: var(--ink-3); }
 
 /* ---- CONTACT PAGE ---- */
-.ls-contact-page { padding: 80px 5vw; max-width: 1000px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: start; padding-top: 120px; }
+.ls-contact-page { padding: 80px 5vw; max-width: 1000px; margin: 0 auto; display: flex; justify-content: center; gap: 60px; align-items:center;min-height: 80vh; padding-top: 120px; }
 .ls-contact-left h1 { font-family: 'Cormorant Garamond', serif; font-size: 48px; font-weight: 300; line-height: 1.1; color: var(--ink); margin-bottom: 18px; }
 .ls-contact-left h1 em { font-style: italic; color: var(--gold); }
 .ls-contact-left > p { font-size: 15px; color: var(--ink-3); line-height: 1.8; margin-bottom: 40px; }
 .ls-contact-info { display: flex; flex-direction: column; gap: 16px; }
-.ls-contact-item { display: flex; align-items: flex-start; gap: 14px; padding: 16px 18px; background: var(--white); border: 1px solid var(--parchment-3); border-radius: 12px; }
+.ls-contact-item { display: flex; align-items:center; gap: 14px; padding: 16px 18px; background: var(--white); border: 1px solid var(--parchment-3); border-radius: 12px; }
 .ls-contact-item-icon { font-size: 20px; flex-shrink: 0; margin-top: 2px; }
 .ls-contact-item h4 { font-size: 12px; font-weight: 500; color: var(--ink-3); letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 3px; }
 .ls-contact-item p { font-size: 14px; color: var(--ink-2); }
@@ -409,5 +409,53 @@ body {
 @media (max-width: 768px) {
   .ls-history-grid {
     grid-template-columns: 1fr;
+  }
+}
+/* ---- SOCIAL BUTTON GROUP ---- */
+.ls-social-group {
+  margin: 32px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ls-social-auth-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  border: none;
+  border-radius: 10px;
+  padding: 13px 20px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s, background 0.2s;
+}
+
+.ls-social-auth-btn.google {
+  background: white;
+  color: #3a3935;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+}
+
+.ls-social-auth-btn.github {
+  background: #24292e;
+  color: white;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+}
+
+.ls-social-auth-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+}
+
+/* Ensure the panel remains visible on mobile now that it's centered */
+@media (max-width: 768px) {
+  .ls-auth-panel.left { 
+    display: flex !important; /* Forces the box to show on phones */
+    padding: 30px 20px;
   }
 }
