@@ -35,15 +35,21 @@ passport.use(new GoogleStrategy({
   callbackURL: '/auth/google/callback',
 }, async (accessToken, refreshToken, profile, done) => {
   try {
-    let user = await User.findOne({ providerId: profile.id });
+    const email = profile.emails && profile.emails[0] ? profile.emails[0].value : `${profile.id}@google.com`;
+    let user = await User.findOne({ email: email });
     if (!user) {
       user = await User.create({
         provider: 'google',
         providerId: profile.id,
-        email: profile.emails && profile.emails[0] ? profile.emails[0].value : `${profile.id}@google.com`,
+        email: email,
         name: profile.displayName || profile.username || 'Google User',
         avatarUrl: profile.photos && profile.photos[0] ? profile.photos[0].value : '',
       });
+    } else if (user.provider !== 'google') {
+      user.provider = 'google';
+      user.providerId = profile.id;
+      user.avatarUrl = user.avatarUrl || (profile.photos && profile.photos[0] ? profile.photos[0].value : '');
+      await user.save();
     }
     return done(null, user);
   } catch (err) {
@@ -57,15 +63,21 @@ passport.use(new GitHubStrategy({
   callbackURL: '/auth/github/callback',
 }, async (accessToken, refreshToken, profile, done) => {
   try {
-    let user = await User.findOne({ providerId: profile.id });
+    const email = profile.emails && profile.emails[0] ? profile.emails[0].value : `${profile.username}@github.com`;
+    let user = await User.findOne({ email: email });
     if (!user) {
       user = await User.create({
         provider: 'github',
         providerId: profile.id,
-        email: profile.emails && profile.emails[0] ? profile.emails[0].value : `${profile.username}@github.com`,
+        email: email,
         name: profile.displayName || profile.username || 'GitHub User',
         avatarUrl: profile.photos && profile.photos[0] ? profile.photos[0].value : '',
       });
+    } else if (user.provider !== 'github') {
+      user.provider = 'github';
+      user.providerId = profile.id;
+      user.avatarUrl = user.avatarUrl || (profile.photos && profile.photos[0] ? profile.photos[0].value : '');
+      await user.save();
     }
     return done(null, user);
   } catch (err) {
@@ -86,7 +98,7 @@ app.get('/auth/google/callback',
       process.env.JWT_SECRET,
       { expiresIn: '7d' }
     );
-    res.redirect(`${process.env.CLIENT_URL}?token=${token}&name=${encodeURIComponent(req.user.name)}`);
+    res.redirect(`${process.env.CLIENT_URL}/oauth-callback?token=${token}&user=${encodeURIComponent(JSON.stringify({ name: req.user.name, email: req.user.email }))}`);
   }
 );
 
@@ -100,7 +112,7 @@ app.get('/auth/github/callback',
       process.env.JWT_SECRET,
       { expiresIn: '7d' }
     );
-    res.redirect(`${process.env.CLIENT_URL}?token=${token}&name=${encodeURIComponent(req.user.name)}`);
+    res.redirect(`${process.env.CLIENT_URL}/oauth-callback?token=${token}&user=${encodeURIComponent(JSON.stringify({ name: req.user.name, email: req.user.email }))}`);
   }
 );
 
