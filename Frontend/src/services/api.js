@@ -22,7 +22,7 @@ const BASE_URL = 'http://localhost:5000';
 
 // uploading document
 export const uploadDocument = async (formData, token) => {
-  const res = await fetch(`${BASE_URL}/analyze`, {
+  const res = await fetch(`${BASE_URL}/api/v1/analyze`, {
     method: 'POST',
     headers: { Authorization: 'Bearer ' + token },
     body: formData,

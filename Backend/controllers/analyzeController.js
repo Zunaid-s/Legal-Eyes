@@ -5,74 +5,73 @@ import fs from 'fs';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-// ✅ Gemini quota and downtime guard
 const geminiGuard = async (fn) => {
-  try {
-    return await fn();
-  } catch (error) {
-    const msg = error?.message?.toLowerCase() || '';
-    const status = error?.status;
-    const timestamp = new Date().toISOString();
+    try {
+        return await fn();
+    } catch (error) {
+        const msg = error?.message?.toLowerCase() || '';
+        const status = error?.status;
+        const timestamp = new Date().toISOString();
 
-    if (status === 429 || msg.includes('quota') || msg.includes('rate limit') || msg.includes('resource_exhausted')) {
-      console.error(`[${timestamp}] ⚠️ Gemini QUOTA exceeded:`, error.message);
-      throw { type: 'QUOTA_EXCEEDED', status: 429, message: 'Gemini API quota exceeded. Please try again later.' };
-    }
-    if (status === 503 || status === 500 || msg.includes('unavailable') || msg.includes('overloaded')) {
-      console.error(`[${timestamp}] 🔴 Gemini SERVICE DOWN:`, error.message);
-      throw { type: 'SERVICE_UNAVAILABLE', status: 503, message: 'Gemini is currently unavailable. Please try again shortly.' };
-    }
+        if (status === 429 || msg.includes('quota') || msg.includes('rate limit') || msg.includes('resource_exhausted')) {
+            console.error(`[${timestamp}] ⚠️ Gemini QUOTA exceeded:`, error.message);
+            throw { type: 'QUOTA_EXCEEDED', status: 429, message: 'Gemini API quota exceeded. Please try again later.' };
+        }
+        if (status === 503 || status === 500 || msg.includes('unavailable') || msg.includes('overloaded')) {
+            console.error(`[${timestamp}] 🔴 Gemini SERVICE DOWN:`, error.message);
+            throw { type: 'SERVICE_UNAVAILABLE', status: 503, message: 'Gemini is currently unavailable. Please try again shortly.' };
+        }
 
-    console.error(`[${timestamp}] ❌ Gemini unknown error:`, error.message);
-    throw error;
-  }
+        console.error(`[${timestamp}] ❌ Gemini unknown error:`, error.message);
+        throw error;
+    }
 };
 
 const getUserDocuments = async (req, res) => {
-  try {
-    const userId = req.user?.id || req.user?._id;
-    if (!userId) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
-    const documents = await Document.find({ userId }).sort({ createdAt: -1 });
+    try {
+        const userId = req.user?.id || req.user?._id;
+        if (!userId) {
+            return res.status(401).json({ error: "Unauthorized" });
+        }
+        const documents = await Document.find({ userId }).sort({ createdAt: -1 });
 
-    return res.status(200).json({
-      success: true,
-      count: documents.length,
-      data: documents,
-    });
-  } catch (error) {
-    console.error("Fetch History Error:", error);
-    return res.status(500).json({
-      success: false,
-      error: "Previous documents fetch karne mein error aaya",
-    });
-  }
+        return res.status(200).json({
+            success: true,
+            count: documents.length,
+            data: documents,
+        });
+    } catch (error) {
+        console.error("Fetch History Error:", error);
+        return res.status(500).json({
+            success: false,
+            error: "Previous documents fetch karne mein error aaya",
+        });
+    }
 };
 
 const analyzeDocument = async (req, res) => {
-  try {
-    const file = req.file;
-    if (!file) return res.status(400).json({ error: 'Document file is required' });
+    try {
+        const file = req.file;
+        if (!file) return res.status(400).json({ error: 'Document file is required' });
 
-    const userId = req.user?.id || req.user?._id || '000000000000000000000000';
+        const userId = req.user?.id || req.user?._id || '000000000000000000000000';
 
-    const documentRecord = await Document.create({
-      filename: file.originalname,
-      userId,
-      status: 'PROCESSING'
-    });
+        const documentRecord = await Document.create({
+            filename: file.originalname,
+            userId,
+            status: 'PROCESSING'
+        });
 
-    // Read file as base64
-    const fileData = fs.readFileSync(file.path);
-    const base64Data = fileData.toString('base64');
+        // Read file as base64
+        const fileData = fs.readFileSync(file.path);
+        const base64Data = fileData.toString('base64');
 
-    const model = genAI.getGenerativeModel({
-      model: 'gemini-2.0-flash',
-      generationConfig: { responseMimeType: 'application/json' }
-    });
+        const model = genAI.getGenerativeModel({
+            model: 'gemini-3-flash-preview',
+            generationConfig: { responseMimeType: 'application/json' }
+        });
 
-    const prompt = `
+        const prompt = `
       You are a legal document analyzer.
       Analyze the following legal document and identify all problematic clauses for a common person.
       Return response strictly in this JSON format:
@@ -92,77 +91,77 @@ const analyzeDocument = async (req, res) => {
       - No extra fields allowed
     `;
 
-    const result = await geminiGuard(() =>
-      model.generateContent([
-        prompt,
-        {
-          inlineData: {
-            data: base64Data,
-            mimeType: file.mimetype
-          }
-        }
-      ])
-    );
+        const result = await geminiGuard(() =>
+            model.generateContent([
+                prompt,
+                {
+                    inlineData: {
+                        data: base64Data,
+                        mimeType: file.mimetype
+                    }
+                }
+            ])
+        );
 
-    const parsed = JSON.parse(result.response.text());
-    const clauses = parsed.problematicClauses;
+        const parsed = JSON.parse(result.response.text());
+        const clauses = parsed.problematicClauses;
 
-    if (!Array.isArray(clauses)) throw new Error('Invalid response from Gemini');
+        if (!Array.isArray(clauses)) throw new Error('Invalid response from Gemini');
 
-    const savedClauses = await Promise.all(
-      clauses.map(clause =>
-        ProblematicClause.create({
-          documentId: documentRecord._id,
-          originalClause: clause.originalClause,
-          issueDescription: clause.issueDescription,
-          suggestion: clause.suggestion,
-          severity: clause.severity,
-        })
-      )
-    );
+        const savedClauses = await Promise.all(
+            clauses.map(clause =>
+                ProblematicClause.create({
+                    documentId: documentRecord._id,
+                    originalClause: clause.originalClause,
+                    issueDescription: clause.issueDescription,
+                    suggestion: clause.suggestion,
+                    severity: clause.severity,
+                })
+            )
+        );
 
-    documentRecord.status = 'COMPLETED';
-    documentRecord.problematicClauses = savedClauses.map(c => c._id);
-    await documentRecord.save();
+        documentRecord.status = 'COMPLETED';
+        documentRecord.problematicClauses = savedClauses.map(c => c._id);
+        await documentRecord.save();
 
-    return res.status(200).json({
-      message: 'Analysis complete',
-      documentId: documentRecord._id,
-      status: 'COMPLETED',
-      totalClauses: savedClauses.length,
-      problematicClauses: savedClauses,
-    });
+        return res.status(200).json({
+            message: 'Analysis complete',
+            documentId: documentRecord._id,
+            status: 'COMPLETED',
+            totalClauses: savedClauses.length,
+            problematicClauses: savedClauses,
+        });
 
-  } catch (error) {
-    console.error('Analysis Error:', error);
-    if (error.type === 'QUOTA_EXCEEDED') return res.status(429).json({ error: error.message });
-    if (error.type === 'SERVICE_UNAVAILABLE') return res.status(503).json({ error: error.message });
-    return res.status(500).json({ error: 'Analysis failed', details: error.message });
-  }
+    } catch (error) {
+        console.error('Analysis Error:', error);
+        if (error.type === 'QUOTA_EXCEEDED') return res.status(429).json({ error: error.message });
+        if (error.type === 'SERVICE_UNAVAILABLE') return res.status(503).json({ error: error.message });
+        return res.status(500).json({ error: 'Analysis failed', details: error.message });
+    }
 };
 
 const getDocumentAnalysis = async (req, res) => {
-  try {
-    const documentId = req.params.id;
-    const document = await Document.findById(documentId);
-    if (!document) {
-      return res.status(404).json({ error: 'Document not found' });
+    try {
+        const documentId = req.params.id;
+        const document = await Document.findById(documentId);
+        if (!document) {
+            return res.status(404).json({ error: 'Document not found' });
+        }
+        const userId = req.user?.id || req.user?._id || '000000000000000000000000';
+        if (document.userId.toString() !== userId.toString() && userId !== '000000000000000000000000') {
+            return res.status(403).json({ error: 'Access denied' });
+        }
+        const clauses = await ProblematicClause.find({ documentId });
+        return res.status(200).json({
+            documentId: document._id,
+            filename: document.filename,
+            status: document.status,
+            problematicClauses: clauses
+        });
+    } catch (error) {
+        console.error('Fetch Analysis Error:', error);
+        return res.status(500).json({ error: 'Failed to fetch analysis', details: error.message });
     }
-    const userId = req.user?.id || req.user?._id || '000000000000000000000000';
-    if (document.userId.toString() !== userId.toString() && userId !== '000000000000000000000000') {
-      return res.status(403).json({ error: 'Access denied' });
-    }
-    const clauses = await ProblematicClause.find({ documentId });
-    return res.status(200).json({
-      documentId: document._id,
-      filename: document.filename,
-      status: document.status,
-      problematicClauses: clauses
-    });
-  } catch (error) {
-    console.error('Fetch Analysis Error:', error);
-    return res.status(500).json({ error: 'Failed to fetch analysis', details: error.message });
-  }
 };
 
 export default { analyzeDocument, getDocumentAnalysis, getUserDocuments };
