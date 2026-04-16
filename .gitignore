@@ -3,3 +3,5 @@ Backend/LegalEyes/src/test
 /.idea/
 .vscode
 Backend/.idea/
+Backend/.env
+Backend/uploads
