@@ -13,6 +13,8 @@ import { fileURLToPath } from 'url';
 import User from './model/user.js';
 import analyzeController from './controllers/analyzeController.js';
 import verifyToken from './middleware/auth.js';
+import chatRoutes from './routes/chatRoutes.js';
+import documentRoutes from './routes/documentRoutes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -135,7 +137,8 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({ storage, limits: { fileSize: 25 * 1024 * 1024 }, fileFilter });
 
 app.post('/api/v1/analyze', verifyToken, upload.single('document'), analyzeController.analyzeDocument);
-app.get('/api/v1/documents/:id/analysis', verifyToken, analyzeController.getDocumentAnalysis);
+app.use('/api/v1/documents', documentRoutes);
+app.use('/api/v1', verifyToken, chatRoutes);
 
 app.use((err, req, res, next) => {
   console.error(err.stack);
