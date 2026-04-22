@@ -20,32 +20,33 @@ export default function UploadPage({ authToken, showToast, onAnalysisComplete })
   };
 
   const startAnalysis = async () => {
-    if (!currentFile) return;
-    setAnalyzing(true);
+  if (!currentFile) return;
+  setAnalyzing(true);
 
-    const formData = new FormData();
-    // Key must be 'document' to match backend's upload.single('document')
-    formData.append('document', currentFile); 
+  const formData = new FormData();
+  
+  // FIX: Key must be 'document' to match backend's upload.single('document')
+  formData.append('document', currentFile); 
 
-    try {
-      // URL must match app.post('/api/v1/analyze', ...) in index.js
-      const res = await axios.post(`${BASE_URL}/api/v1/analyze`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          'Authorization': `Bearer ${authToken}` 
-        }
-      });
+  try {
+    // FIX: URL must match app.post('/api/v1/analyze', ...) in index.js
+    const res = await axios.post(`${BASE_URL}/api/v1/analyze`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        'Authorization': `Bearer ${authToken}` 
+      }
+    });
 
-      onAnalysisComplete(res.data);
-      showToast('Analysis complete!');
-      navigate('/summary');
-    } catch (err) {
-      console.error("Analysis Error:", err);
-      showToast(err.response?.data?.error || 'Analyze fail. Check backend logs.');
-    } finally {
-      setAnalyzing(false);
-    }
-  };
+    onAnalysisComplete(res.data);
+    showToast('Analysis complete!');
+    navigate('/summary');
+  } catch (err) {
+    console.error("Analysis Error:", err);
+    showToast(err.response?.data?.error || 'Analyze fail. Check backend logs.');
+  } finally {
+    setAnalyzing(false);
+  }
+};
 
   return (
     <div className="max-w-3xl mx-auto py-10 px-4 space-y-8">

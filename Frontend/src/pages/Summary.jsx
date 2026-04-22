@@ -20,12 +20,20 @@ export default function Summary({ analysisData, authToken }) {
     );
   }
 
+  const docId = analysisData.documentId || analysisData._id;
+  const docName = analysisData.filename || analysisData.fileName || "Uploaded Document";
+
+  const clauses = analysisData.problematicClauses || [];
+  const exeSummary = clauses.length > 0 ? clauses.map(c => c.issueDescription).join('. ') : "No major issues found. Document looks clean.";
+  const risksText = clauses.length > 0 ? clauses.map(c => c.futureLosses).filter(Boolean).join('. ') || "No significant long-term risks detected." : "No significant long-term risks detected.";
+  const profitText = clauses.length > 0 ? clauses.map(c => c.futureBenefits).filter(Boolean).join('. ') || "Standard financial terms identified." : "Standard financial terms identified.";
+
   // Define the text the AI will read
   const textToRead = `
-    Document Analysis for ${analysisData.fileName || 'your document'}. 
-    Executive Summary: ${analysisData.summary}. 
-    Future Risks: ${analysisData?.futureRisks || 'Standard long-term liabilities apply'}.
-    Profit Opportunities: ${analysisData?.profitOpportunities || 'Optimization available via clause leverage'}.
+    Document Analysis for ${docName}. 
+    Executive Summary: ${exeSummary}. 
+    Future Risks: ${risksText}.
+    Profit Opportunities: ${profitText}.
   `;
 
   const handleVoiceToggle = () => {
@@ -36,7 +44,7 @@ export default function Summary({ analysisData, authToken }) {
       const utterance = new SpeechSynthesisUtterance(textToRead);
       utterance.rate = 0.9; // Slightly slower for legal clarity
       utterance.pitch = 1;
-      
+
       utterance.onend = () => setIsSpeaking(false);
       synth.speak(utterance);
       setIsSpeaking(true);
@@ -51,11 +59,11 @@ export default function Summary({ analysisData, authToken }) {
           <h1 className="font-serif text-4xl font-light italic text-base-content">
             Analysis <span className="text-primary">Summary</span>
           </h1>
-          <p className="text-sm opacity-60 mt-1">Reviewing: {analysisData?.fileName || "Uploaded Document"}</p>
+          <p className="text-sm opacity-60 mt-1">Reviewing: {docName}</p>
         </div>
-        
+
         {/* AI Voice Assistant Button */}
-        <button 
+        <button
           onClick={handleVoiceToggle}
           className={`btn btn-outline gap-2 ${isSpeaking ? 'btn-error animate-pulse' : 'btn-primary'}`}
         >
@@ -68,7 +76,7 @@ export default function Summary({ analysisData, authToken }) {
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        
+
         {/* LEFT COLUMN: Metrics (2 Cols) */}
         <aside className="lg:col-span-2 space-y-6">
           <div className="card bg-base-200 border border-base-300 p-5 shadow-sm text-center">
@@ -82,29 +90,62 @@ export default function Summary({ analysisData, authToken }) {
           </div>
         </aside>
 
-        {/* CENTER COLUMN: Detailed Analysis (6 Cols) */}
-        <main className="lg:col-span-6 space-y-6">
-          <SummarySection 
-            icon="📄" title="Executive Summary" badge="Overview"
-            summary={analysisData?.summary || "A high-level view of your rights."}
-          />
+        {/* CENTER COLUMN: Detailed Analysis (10 Cols) */}
+        <main className="lg:col-span-10 space-y-6">
+          {clauses.length === 0 ? (
+            <div className="alert alert-success shadow-sm">
+              <span>No major problematic clauses found. The document looks clean!</span>
+            </div>
+          ) : (
+            clauses.map((clause, index) => (
+              <div key={index} className="card bg-base-200 border border-base-300 shadow-sm p-6 space-y-4">
+                <div className="flex justify-between items-start gap-4">
+                  <div className="badge badge-primary badge-outline text-xs whitespace-nowrap">Clause {index + 1}</div>
+                  <div className={`badge ${clause.severity === 'HIGH' ? 'badge-error' : clause.severity === 'MEDIUM' ? 'badge-warning' : 'badge-info'} text-xs`}>
+                    {clause.severity || 'LOW'}
+                  </div>
+                </div>
 
-          <SummarySection 
-            icon="⏳" title="Future Risk Forecast" badge="Liability"
-            summary={analysisData?.futureRisks || "No significant long-term risks detected."}
-          />
+                <div>
+                  <h4 className="text-xs font-bold opacity-50 uppercase tracking-wider mb-1">Original Text</h4>
+                  <p className="text-sm font-serif italic border-l-2 border-primary pl-3 opacity-80">"{clause.originalClause}"</p>
+                </div>
 
-          <SummarySection 
-            icon="📈" title="Profit & Savings" badge="Growth"
-            summary={analysisData?.profitOpportunities || "Standard financial terms identified."}
-          />
+                <div>
+                  <h4 className="text-xs font-bold opacity-50 uppercase tracking-wider mb-1">The Issue</h4>
+                  <p className="text-sm">{clause.issueDescription}</p>
+                </div>
+
+                <div>
+                  <h4 className="text-xs font-bold opacity-50 uppercase tracking-wider mb-1">Recommendation</h4>
+                  <p className="text-sm text-primary">{clause.suggestion}</p>
+                </div>
+
+                {clause.futureLosses && clause.futureLosses.trim() !== "" && (
+                  <div className="p-3 rounded-xl border border-error bg-base-100 mt-2">
+                    <h4 className="text-xs font-bold text-error uppercase tracking-wider mb-1 flex items-center gap-2">
+                      <span>⚠️</span> Potential Risk
+                    </h4>
+                    <p className="text-sm text-error">{clause.futureLosses}</p>
+                  </div>
+                )}
+
+                {clause.futureBenefits && clause.futureBenefits.trim() !== "" && (
+                  <div className="p-3 rounded-xl border border-success bg-base-100 mt-2">
+                    <h4 className="text-xs font-bold text-success uppercase tracking-wider mb-1 flex items-center gap-2">
+                      <span>💡</span> Profit & Savings Opportunity
+                    </h4>
+                    <p className="text-sm text-success">{clause.futureBenefits}</p>
+                  </div>
+                )}
+              </div>
+            ))
+          )}
         </main>
-
-        {/* RIGHT COLUMN: AI Chatbox (4 Cols) */}
-        <aside className="lg:col-span-4">
-          <DocumentChat documentId={analysisData?._id} authToken={authToken} />
-        </aside>
       </div>
+
+      {/* Floating Document Chat */}
+      <DocumentChat documentId={docId} authToken={authToken} showToast={(msg) => console.log(msg)} />
     </div>
   );
 }
