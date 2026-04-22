@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import BASE_URL from '../services/api';
 
+<<<<<<< HEAD
 const ANALYSIS_OPTIONS = [
   { label: 'Plain-language summary', value: 'summary', defaultChecked: true },
   { label: 'Risk & flag detection', value: 'risks', defaultChecked: true },
@@ -12,65 +13,34 @@ const ANALYSIS_OPTIONS = [
   { label: 'Export formatted report', value: 'export', defaultChecked: false },
 ];
 
+=======
+>>>>>>> frontend
 export default function UploadPage({ authToken, showToast, onAnalysisComplete }) {
   const navigate = useNavigate();
-  const fileInputRef = useRef();
+  const fileInputRef = useRef(null);
   const [currentFile, setCurrentFile] = useState(null);
-  const [isDragging, setIsDragging] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [progressStep, setProgressStep] = useState('');
-  const [checkedOptions, setCheckedOptions] = useState(
-    ANALYSIS_OPTIONS.reduce((acc, o) => ({ ...acc, [o.value]: o.defaultChecked }), {})
-  );
 
-  function getFileDisplay(file) {
-    const size = file.size < 1024 * 1024
-      ? (file.size / 1024).toFixed(1) + ' KB'
-      : (file.size / (1024 * 1024)).toFixed(1) + ' MB';
-    const ext = file.name.split('.').pop().toUpperCase();
-    const icons = { PDF: '📄', DOCX: '📝', DOC: '📝', TXT: '📃' };
-    return { size, ext, icon: icons[ext] || '📄' };
-  }
+  const handleBoxClick = () => fileInputRef.current.click();
 
-  function handleFile(file) {
-    setCurrentFile(file);
-    showToast('File ready: ' + file.name);
-  }
-
-  function removeFile() {
-    setCurrentFile(null);
-    if (fileInputRef.current) fileInputRef.current.value = '';
-    showToast('File removed.');
-  }
-
-  async function startAnalysis() {
-    if (!currentFile) return showToast('Please upload a file first.');
-    if (!authToken) {
-      showToast('Please log in to analyse documents.');
-      setTimeout(() => navigate('/auth'), 1000);
-      return;
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setCurrentFile(file);
+      showToast(`Selected: ${file.name}`);
     }
+  };
 
-    const fakeSteps = [
-      [20, 'Extracting text from document...'],
-      [40, 'Identifying clauses and sections...'],
-      [60, 'Running legal language model...'],
-      [80, 'Flagging risks and obligations...'],
-    ];
-
+  const startAnalysis = async () => {
+    if (!currentFile) return;
     setAnalyzing(true);
-    setProgress(0);
-    let si = 0;
-    const fakeTimer = setInterval(() => {
-      if (si < fakeSteps.length) {
-        setProgress(fakeSteps[si][0]);
-        setProgressStep(fakeSteps[si][1]);
-        si++;
-      }
-    }, 1200);
+
+    const formData = new FormData();
+    // Key must be 'document' to match backend's upload.single('document')
+    formData.append('document', currentFile); 
 
     try {
+<<<<<<< HEAD
       const selected = Object.entries(checkedOptions)
         .filter(([, v]) => v)
         .map(([k]) => k);
@@ -84,64 +54,55 @@ export default function UploadPage({ authToken, showToast, onAnalysisComplete })
         headers: {
           Authorization: `Bearer ${authToken}`
         },
+=======
+      // URL must match app.post('/api/v1/analyze', ...) in index.js
+      const res = await axios.post(`${BASE_URL}/api/v1/analyze`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          'Authorization': `Bearer ${authToken}` 
+        }
+>>>>>>> frontend
       });
 
-      clearInterval(fakeTimer);
-      const data = res.data;
-
-      setProgress(100);
-      setProgressStep('Analysis complete!');
-
-      setTimeout(() => {
-        setAnalyzing(false);
-        onAnalysisComplete(data);
-        navigate('/summary');
-      }, 700);
-
+      onAnalysisComplete(res.data);
+      showToast('Analysis complete!');
+      navigate('/summary');
     } catch (err) {
-      clearInterval(fakeTimer);
+      console.error("Analysis Error:", err);
+      showToast(err.response?.data?.error || 'Analyze fail. Check backend logs.');
+    } finally {
       setAnalyzing(false);
-      const msg = err.response?.data?.error || 'Cannot reach server. Is the backend running?';
-      showToast(msg);
     }
-  }
+  };
 
   return (
-    <div className="ls-page">
-      <div className="ls-upload-page">
-        <h1>Upload your <em>document</em></h1>
-        <p>We'll analyze it and give you a clear, plain-English breakdown of everything inside.</p>
+    <div className="max-w-3xl mx-auto py-10 px-4 space-y-8">
+      <header className="text-center space-y-2">
+        <h1 className="font-serif text-4xl font-light text-base-content">
+          Upload your <em className="text-primary italic">document</em>
+        </h1>
+        <p className="opacity-60 text-sm">Upload a contract or lease for an instant plain-English summary.</p>
+      </header>
 
-        {/* Dropzone */}
-        <div
-          className={`ls-dropzone${isDragging ? ' drag' : ''}`}
-          onClick={() => fileInputRef.current?.click()}
-          onDragOver={e => { e.preventDefault(); setIsDragging(true); }}
-          onDragLeave={() => setIsDragging(false)}
-          onDrop={e => {
-            e.preventDefault();
-            setIsDragging(false);
-            const f = e.dataTransfer.files[0];
-            if (f) handleFile(f);
-          }}
-        >
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".pdf,.doc,.docx,.txt"
-            style={{ display: 'none' }}
-            onChange={e => { const f = e.target.files[0]; if (f) handleFile(f); }}
-          />
-          <span className="ls-dropzone-icon">📂</span>
-          <h3>Drag &amp; drop your legal document here</h3>
-          <p>or <span className="ls-browse-link">browse to upload</span></p>
-          <div className="ls-file-types">
-            {['PDF', 'DOCX', 'DOC', 'TXT', 'Up to 25MB'].map(t => (
-              <span className="ls-file-type-badge" key={t}>{t}</span>
-            ))}
-          </div>
+      {/* Hidden File Input */}
+      <input 
+        type="file" 
+        ref={fileInputRef} 
+        onChange={handleFileChange} 
+        className="hidden" 
+        accept=".pdf,.docx,.doc" 
+      />
+
+      {/* Analysis Loading Overlay */}
+      {analyzing && (
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-base-100/90 backdrop-blur-sm">
+          <span className="loading loading-spinner loading-lg text-primary mb-4"></span>
+          <h2 className="font-serif text-2xl italic">Analyzing Document...</h2>
+          <p className="text-sm opacity-50">This may take up to 15 seconds.</p>
         </div>
+      )}
 
+<<<<<<< HEAD
         {/* File preview */}
         {currentFile && (() => {
           const { size, ext, icon } = getFileDisplay(currentFile);
@@ -166,22 +127,46 @@ export default function UploadPage({ authToken, showToast, onAnalysisComplete })
           >
             {analyzing ? 'Analyzing...' : 'Analyze Document'} <span>→</span>
           </button>
+=======
+      {/* Dropzone Area */}
+      <div 
+        onClick={handleBoxClick}
+        className="border-2 border-dashed border-base-300 rounded-3xl p-16 text-center bg-base-200/50 hover:border-primary transition-all cursor-pointer group"
+      >
+        <div className="text-5xl mb-4 group-hover:scale-110 transition-transform">📂</div>
+        <h3 className="text-lg font-medium">Drag & drop your document here</h3>
+        <p className="text-sm opacity-50 mt-2">or <span className="text-primary underline font-medium">browse to upload</span></p>
+        
+        <div className="flex gap-2 justify-center mt-6">
+          <div className="badge badge-outline opacity-40">PDF</div>
+          <div className="badge badge-outline opacity-40">DOCX</div>
+>>>>>>> frontend
         </div>
       </div>
 
-      {/* Progress overlay */}
-      {analyzing && (
-        <div className="ls-progress-overlay show">
-          <div className="ls-progress-box">
-            <h3>Analyzing your document</h3>
-            <p>Our AI is reading every clause carefully...</p>
-            <div className="ls-progress-bar-wrap">
-              <div className="ls-progress-bar-fill" style={{ width: progress + '%' }}></div>
-            </div>
-            <div className="ls-progress-step-label">{progressStep}</div>
-          </div>
+      {/* File Status & Analyze Button */}
+      <div className="flex flex-col md:flex-row items-center justify-between gap-6 p-6 bg-base-200 rounded-2xl border border-base-300 shadow-sm">
+        <div className="flex items-center gap-3 text-base-content">
+          {currentFile ? (
+            <>
+              <span className="text-3xl">📄</span>
+              <div>
+                <p className="font-bold text-sm">{currentFile.name}</p>
+                <p className="text-xs opacity-50">{(currentFile.size / 1024).toFixed(0)} KB</p>
+              </div>
+            </>
+          ) : (
+            <p className="text-sm opacity-50 italic">No file selected</p>
+          )}
         </div>
-      )}
+
+        <button 
+          onClick={startAnalysis}
+          className={`btn btn-primary btn-wide shadow-lg ${(!currentFile || analyzing) ? 'btn-disabled opacity-50' : ''}`}
+        >
+          {analyzing ? 'Processing...' : 'Analyze Document →'}
+        </button>
+      </div>
     </div>
   );
 }
