@@ -15,12 +15,11 @@ export default function History({ authToken, onLoadSummary }) {
   const fetchHistory = async () => {
     setLoading(true);
     try {
-      // FIX: Ensure this matches where you mounted documentRoutes in index.js
-      // If index.js has: app.use('/api/v1/documents', documentRoutes)
-      const res = await axios.get(`${BASE_URL}/api/v1/documents`, {
+      const res = await axios.get(`${BASE_URL}/api/v1/documents/history`, {
         headers: { Authorization: `Bearer ${authToken}` }
       });
-      setDocs(res.data);
+      // The backend returns { success: true, count: X, data: [...] }
+      setDocs(res.data.data || res.data);
     } catch (err) {
       console.error("History fetch error:", err);
     } finally {
@@ -35,9 +34,34 @@ export default function History({ authToken, onLoadSummary }) {
   const totalPages = Math.ceil(docs.length / CARDS_PER_PAGE);
   const currentDocs = docs.slice((page - 1) * CARDS_PER_PAGE, page * CARDS_PER_PAGE);
 
-  const handleView = (doc) => {
-    onLoadSummary(doc);
-    navigate('/summary');
+  const handleView = async (doc) => {
+    try {
+      const analysisRes = await axios.get(`${BASE_URL}/api/v1/documents/${doc._id}/analysis`, {
+        headers: { Authorization: `Bearer ${authToken}` }
+      });
+      onLoadSummary(analysisRes.data);
+      navigate('/summary');
+    } catch (err) {
+      console.error("Failed to load analysis details", err);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this document history?")) return;
+    try {
+      await axios.delete(`${BASE_URL}/api/v1/documents/delDoc/${id}`, {
+        headers: { Authorization: `Bearer ${authToken}` }
+      });
+      setDocs(docs.filter(doc => doc._id !== id));
+      // Adjust page if necessary
+      const newTotalPages = Math.ceil((docs.length - 1) / CARDS_PER_PAGE);
+      if (page > newTotalPages && newTotalPages > 0) {
+        setPage(newTotalPages);
+      }
+    } catch (err) {
+      console.error("Delete error:", err);
+      alert("Failed to delete document.");
+    }
   };
 
   if (loading) {
@@ -56,9 +80,9 @@ export default function History({ authToken, onLoadSummary }) {
       </header>
 
       {docs.length === 0 ? (
-        <div className="text-center py-20 bg-base-200 rounded-3xl border border-base-300">
+        <div className="text-center py-20 bg-base-200 rounded-none border border-base-300">
           <p className="opacity-50 italic">No documents found in your history.</p>
-          <button onClick={() => navigate('/upload')} className="btn btn-primary mt-4">Upload First Document</button>
+          <button onClick={() => navigate('/upload')} className="btn btn-primary mt-4 rounded-none">Upload First Document</button>
         </div>
       ) : (
         <>
@@ -67,7 +91,7 @@ export default function History({ authToken, onLoadSummary }) {
               <div key={doc._id} className="card bg-base-200 border border-base-300 shadow-sm hover:border-primary transition-all p-6">
                 <div className="flex justify-between items-start mb-4">
                   <div>
-                    <h3 className="font-serif text-xl font-medium">{doc.fileName || 'Untitled Document'}</h3>
+                    <h3 className="font-serif text-xl font-medium">{doc.filename || doc.fileName || 'Untitled Document'}</h3>
                     <p className="text-xs opacity-50">
                       {new Date(doc.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
                     </p>
@@ -81,7 +105,8 @@ export default function History({ authToken, onLoadSummary }) {
                   {doc.summary || 'Click view to see the full analysis of this document.'}
                 </p>
 
-                <div className="card-actions justify-end">
+                <div className="card-actions justify-end gap-2">
+                  <button onClick={() => handleDelete(doc._id)} className="btn btn-outline btn-error btn-xs rounded-none">Delete</button>
                   <button onClick={() => handleView(doc)} className="btn btn-ghost btn-sm text-primary">View Analysis →</button>
                 </div>
               </div>

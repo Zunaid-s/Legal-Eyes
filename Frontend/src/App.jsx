@@ -75,7 +75,7 @@ export default function App() {
               path="/summary" 
               element={
                 <ProtectedRoute authToken={authToken}>
-                  <Summary analysisData={analysisData} />
+                  <Summary analysisData={analysisData} authToken={authToken} />
                 </ProtectedRoute>
               } 
             />
