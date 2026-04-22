@@ -1,4 +1,9 @@
+import { getGoogleAuthURL, getGitHubAuthURL } from '../services/api';
+
 export default function Auth({ onLogin, showToast }) {
+  const handleGoogleLogin = () => window.location.href = getGoogleAuthURL();
+  const handleGithubLogin = () => window.location.href = getGitHubAuthURL();
+
   return (
     <div className="flex items-center justify-center min-h-[70vh]">
       <div className="card w-full max-w-md bg-base-200 shadow-2xl border border-base-300 overflow-hidden">
@@ -10,11 +15,11 @@ export default function Auth({ onLogin, showToast }) {
 
           <div className="space-y-4">
             {/* Social Buttons use the Primary/Neutral colors from your OKLCH theme */}
-            <button className="btn btn-outline w-full gap-4 normal-case font-medium border-base-300">
+            <button onClick={handleGoogleLogin} className="btn btn-outline w-full gap-4 normal-case font-medium border-base-300">
               <img src="/google-icon.svg" className="w-5 h-5" alt="Google" />
               Continue with Google
             </button>
-            <button className="btn btn-neutral w-full gap-4 normal-case font-medium">
+            <button onClick={handleGithubLogin} className="btn btn-neutral w-full gap-4 normal-case font-medium">
               <img src="/github-icon.svg" className="w-5 h-5 invert" alt="GitHub" />
               Continue with GitHub
             </button>
