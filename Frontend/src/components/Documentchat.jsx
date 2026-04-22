@@ -9,9 +9,33 @@ export default function DocumentChat({ documentId, authToken, showToast }) {
   const [isListening, setIsListening] = useState(false);
   const [interimInput, setInterimInput] = useState('');
   const [isOpen, setIsOpen] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
   
   // Use a ref to store the recognition object to prevent re-renders from killing it
   const recognitionRef = useRef(null);
+  const messagesEndRef = useRef(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, interimInput]);
+
+  const speakText = (text) => {
+    if (!window.speechSynthesis) return;
+    
+    // Stop any existing speech
+    window.speechSynthesis.cancel();
+    
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.onstart = () => setIsSpeaking(true);
+    utterance.onend = () => setIsSpeaking(false);
+    utterance.onerror = () => setIsSpeaking(false);
+    
+    window.speechSynthesis.speak(utterance);
+  };
 
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -45,6 +69,8 @@ export default function DocumentChat({ documentId, authToken, showToast }) {
       } else {
         setInterimInput(interim);
       }
+      
+      // Auto-scroll to bottom of input if it's a textarea or just keep it visible
     };
 
     recognition.onerror = (event) => {
@@ -142,9 +168,13 @@ export default function DocumentChat({ documentId, authToken, showToast }) {
                   <span className="text-[10px] font-bold text-error uppercase tracking-tighter">Listening</span>
                 </div>
               )}
-              <label htmlFor="chat-drawer" className="btn btn-square btn-ghost btn-xs rounded-none" onClick={() => setIsOpen(false)}>
+              <button 
+                type="button"
+                className="btn btn-square btn-ghost btn-xs rounded-none" 
+                onClick={() => setIsOpen(false)}
+              >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
-              </label>
+              </button>
             </div>
           </div>
 
@@ -153,6 +183,17 @@ export default function DocumentChat({ documentId, authToken, showToast }) {
               <div key={i} className={`chat ${m.role === 'ai' ? 'chat-start' : 'chat-end'}`}>
                 <div className={`chat-bubble text-sm ${m.role === 'ai' ? 'chat-bubble-primary shadow-md' : ''}`}>
                   {m.text}
+                  {m.role === 'ai' && (
+                    <button 
+                      onClick={() => speakText(m.text)}
+                      className="ml-2 opacity-40 hover:opacity-100 transition-opacity"
+                      title="Speak message"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                      </svg>
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
@@ -163,6 +204,7 @@ export default function DocumentChat({ documentId, authToken, showToast }) {
                 </div>
               </div>
             )}
+            <div ref={messagesEndRef} />
           </div>
 
           <div className="p-4 bg-base-100 border-t border-base-300" style={{ borderRadius: '0px' }}>
