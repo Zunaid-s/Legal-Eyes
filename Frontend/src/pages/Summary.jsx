@@ -101,7 +101,7 @@ export default function Summary({ analysisData, authToken }) {
         </main>
 
         {/* RIGHT COLUMN: AI Chatbox (4 Cols) */}
-        <aside className="lg:col-span-4 sticky top-10">
+        <aside className="lg:col-span-4">
           <DocumentChat documentId={analysisData?._id} authToken={authToken} />
         </aside>
       </div>

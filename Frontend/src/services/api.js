@@ -2,8 +2,7 @@ const BASE_URL = 'http://localhost:5000';
 
 // Uploading document for analysis
 export const uploadDocument = async (formData, token) => {
-  // Use the exact versioned endpoint
-  const res = await fetch(`${BASE_URL}/api/v1/documents/analyze`, {
+  const res = await fetch(`${BASE_URL}/api/v1/analyze`, {
     method: 'POST',
     headers: { 
       // Do NOT set Content-Type for FormData; fetch sets it automatically
