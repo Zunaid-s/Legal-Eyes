@@ -80,15 +80,15 @@ export default function History({ authToken, onLoadSummary }) {
       </header>
 
       {docs.length === 0 ? (
-        <div className="text-center py-20 bg-base-200 rounded-none border border-base-300">
+        <div className="text-center py-20 bg-base-200 border border-base-300" style={{ borderRadius: '0px' }}>
           <p className="opacity-50 italic">No documents found in your history.</p>
-          <button onClick={() => navigate('/upload')} className="btn btn-primary mt-4 rounded-none">Upload First Document</button>
+          <button onClick={() => navigate('/upload')} className="btn btn-primary mt-4" style={{ borderRadius: '0px' }}>Upload First Document</button>
         </div>
       ) : (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {currentDocs.map((doc) => (
-              <div key={doc._id} className="card bg-base-200 border border-base-300 shadow-sm hover:border-primary transition-all p-6">
+              <div key={doc._id} className="card bg-base-200 border border-base-300 shadow-sm hover:border-primary transition-all p-6" style={{ borderRadius: '0px' }}>
                 <div className="flex justify-between items-start mb-4">
                   <div>
                     <h3 className="font-serif text-xl font-medium">{doc.filename || doc.fileName || 'Untitled Document'}</h3>
@@ -96,7 +96,7 @@ export default function History({ authToken, onLoadSummary }) {
                       {new Date(doc.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
                     </p>
                   </div>
-                  <div className={`badge ${doc.overallRisk === 'high' ? 'badge-error' : doc.overallRisk === 'medium' ? 'badge-warning' : 'badge-success'} badge-sm`}>
+                  <div className={`badge ${doc.overallRisk === 'high' ? 'badge-error' : doc.overallRisk === 'medium' ? 'badge-warning' : 'badge-success'} badge-sm`} style={{ borderRadius: '0px' }}>
                     {doc.overallRisk?.toUpperCase() || 'LOW'}
                   </div>
                 </div>
@@ -106,8 +106,8 @@ export default function History({ authToken, onLoadSummary }) {
                 </p>
 
                 <div className="card-actions justify-end gap-2">
-                  <button onClick={() => handleDelete(doc._id)} className="btn btn-outline btn-error btn-xs rounded-none">Delete</button>
-                  <button onClick={() => handleView(doc)} className="btn btn-ghost btn-sm text-primary">View Analysis →</button>
+                  <button onClick={() => handleDelete(doc._id)} className="btn btn-outline btn-error btn-xs" style={{ borderRadius: '0px' }}>Delete</button>
+                  <button onClick={() => handleView(doc)} className="btn btn-ghost btn-sm text-primary" style={{ borderRadius: '0px' }}>View Analysis →</button>
                 </div>
               </div>
             ))}
@@ -116,15 +116,17 @@ export default function History({ authToken, onLoadSummary }) {
           {/* Pagination Controls */}
           {totalPages > 1 && (
             <div className="flex justify-center mt-10">
-              <div className="join border border-base-300">
+              <div className="join border border-base-300" style={{ borderRadius: '0px' }}>
                 <button 
                   className="join-item btn btn-sm bg-base-200" 
+                  style={{ borderRadius: '0px' }}
                   onClick={() => setPage(p => Math.max(1, p - 1))}
                   disabled={page === 1}
                 >«</button>
-                <button className="join-item btn btn-sm bg-base-200">Page {page}</button>
+                <button className="join-item btn btn-sm bg-base-200" style={{ borderRadius: '0px' }}>Page {page}</button>
                 <button 
                   className="join-item btn btn-sm bg-base-200" 
+                  style={{ borderRadius: '0px' }}
                   onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                   disabled={page === totalPages}
                 >»</button>

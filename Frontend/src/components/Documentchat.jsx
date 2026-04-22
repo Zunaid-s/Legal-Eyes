@@ -116,7 +116,8 @@ export default function DocumentChat({ documentId, authToken, showToast }) {
       <div className="drawer-content fixed bottom-6 right-6 z-[60]">
         <label 
           htmlFor="chat-drawer" 
-          className={`btn btn-primary shadow-2xl transition-all duration-300 drawer-button rounded-none border-2 border-primary min-h-12 h-auto py-2 w-48 flex items-center justify-center ${isOpen ? 'scale-0' : 'scale-100 hover:scale-105'}`}
+          className={`btn btn-primary shadow-2xl transition-all duration-300 drawer-button rounded-none border-2 border-primary min-h-12 h-auto py-2 w-48 flex items-center justify-center ${isOpen ? 'scale-0 pointer-events-none' : 'scale-100 hover:scale-105'}`}
+          style={{ borderRadius: '0px' }}
         >
           <span className="text-sm px-2 text-center font-bold leading-tight uppercase tracking-wide">Ask questions about this document</span>
         </label>
@@ -126,8 +127,8 @@ export default function DocumentChat({ documentId, authToken, showToast }) {
       <div className={`drawer-side fixed inset-0 ${isOpen ? 'visible' : 'pointer-events-none'}`}>
         <label htmlFor="chat-drawer" aria-label="close sidebar" className="drawer-overlay" onClick={() => setIsOpen(false)}></label>
         
-        <div className={`min-h-full w-full sm:w-96 bg-base-200 text-base-content flex flex-col border-l border-base-300 absolute right-0 transition-transform duration-300 transform ${isOpen ? 'translate-x-0' : 'translate-x-full'} rounded-none`}>
-          <div className="p-4 border-b border-base-300 bg-base-300 flex justify-between items-center rounded-none">
+        <div className={`min-h-full w-full sm:w-96 bg-base-200 text-base-content flex flex-col border-l border-base-300 absolute right-0 transition-transform duration-300 transform ${isOpen ? 'translate-x-0' : 'translate-x-full'}`} style={{ borderRadius: '0px' }}>
+          <div className="p-4 border-b border-base-300 bg-base-300 flex justify-between items-center" style={{ borderRadius: '0px' }}>
             <h3 className="font-serif font-bold italic flex items-center gap-2">
               <span className="text-primary text-xs">●</span> AI Assistant
             </h3>
@@ -164,11 +165,12 @@ export default function DocumentChat({ documentId, authToken, showToast }) {
             )}
           </div>
 
-          <div className="p-4 bg-base-100 border-t border-base-300 rounded-none">
-            <div className="flex gap-2 items-center bg-base-200 rounded-none p-1 pr-2 border border-transparent focus-within:border-primary transition-colors">
+          <div className="p-4 bg-base-100 border-t border-base-300" style={{ borderRadius: '0px' }}>
+            <div className="flex gap-2 items-center bg-base-200 p-1 pr-2 border border-transparent focus-within:border-primary transition-colors" style={{ borderRadius: '0px' }}>
               <button 
                 onClick={toggleListen}
-                className={`btn btn-square btn-ghost btn-sm transition-all rounded-none ${isListening ? 'text-error bg-error/10 animate-pulse' : 'opacity-60 hover:opacity-100 hover:bg-base-300'}`}
+                className={`btn btn-square btn-ghost btn-sm transition-all ${isListening ? 'text-error bg-error/10 animate-pulse' : 'opacity-60 hover:opacity-100 hover:bg-base-300'}`}
+                style={{ borderRadius: '0px' }}
               >
                 {isListening ? (
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H10a1 1 0 01-1-1v-4z" /></svg>
@@ -178,7 +180,8 @@ export default function DocumentChat({ documentId, authToken, showToast }) {
               </button>
               
               <input 
-                className="input input-ghost w-full focus:bg-transparent text-sm h-10 rounded-none" 
+                className="input input-ghost w-full focus:bg-transparent text-sm h-10" 
+                style={{ borderRadius: '0px' }}
                 placeholder={isListening ? "Listening... Speak clearly" : "Type a question..."} 
                 value={input + interimInput}
                 onChange={(e) => {
@@ -188,7 +191,7 @@ export default function DocumentChat({ documentId, authToken, showToast }) {
                 onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
               />
               
-              <button className="btn btn-primary btn-sm rounded-none h-8 min-h-0" onClick={sendMessage}>Send</button>
+              <button className="btn btn-primary btn-sm h-8 min-h-0" style={{ borderRadius: '0px' }} onClick={sendMessage}>Send</button>
             </div>
           </div>
         </div>
