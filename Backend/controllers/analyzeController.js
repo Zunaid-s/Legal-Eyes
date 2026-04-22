@@ -27,28 +27,7 @@ const geminiGuard = async (fn) => {
     }
 };
 
-const getUserDocuments = async (req, res) => {
-    try {
-        const userId = req.user?.id || req.user?._id;
-        if (!userId) {
-            return res.status(401).json({ error: "Unauthorized" });
-        }
-        const documents = await Document.find({ userId }).sort({ createdAt: -1 });
-
-        return res.status(200).json({
-            success: true,
-            count: documents.length,
-            data: documents,
-        });
-    } catch (error) {
-        console.error("Fetch History Error:", error);
-        return res.status(500).json({
-            success: false,
-            error: "Previous documents fetch karne mein error aaya",
-        });
-    }
-};
-
+// actual gemini api call and base64 conversion + file reading + prompt + saving data into database + deleting file from server + finally sending response + error handling.
 const analyzeDocument = async (req, res) => {
     try {
         const file = req.file;
@@ -66,10 +45,12 @@ const analyzeDocument = async (req, res) => {
         const fileData = fs.readFileSync(file.path);
         const base64Data = fileData.toString('base64');
 
-        const model = genAI.getGenerativeModel({
-            model: 'gemini-3-flash-preview',
-            generationConfig: { responseMimeType: 'application/json' }
-        });
+        // Clean up the file from the uploads directory
+        try {
+            fs.unlinkSync(file.path);
+        } catch (err) {
+            console.error('Error deleting temp file:', err);
+        }
 
         const prompt = `
       You are a legal document analyzer.
@@ -81,7 +62,9 @@ const analyzeDocument = async (req, res) => {
             "originalClause": "exact text from document",
             "issueDescription": "why this clause is problematic",
             "suggestion": "recommended fix",
-            "severity": "HIGH" or "MEDIUM" or "LOW"
+            "severity": "HIGH" or "MEDIUM" or "LOW",
+            "futureBenefits":"what benefits user will get if he/she gets this clause fixed(add this only if it is required and not always)",
+            "futureLosses":"what losses user will face if he/she doesn't get this clause fixed(add this only if it is required and not always)"
           }
         ]
       }
@@ -90,6 +73,11 @@ const analyzeDocument = async (req, res) => {
       - Return empty array if no problematic clauses found
       - No extra fields allowed
     `;
+
+        const model = genAI.getGenerativeModel({
+            model: 'gemini-3-flash-preview',
+            generationConfig: { responseMimeType: 'application/json' }
+        });
 
         const result = await geminiGuard(() =>
             model.generateContent([
@@ -116,6 +104,8 @@ const analyzeDocument = async (req, res) => {
                     issueDescription: clause.issueDescription,
                     suggestion: clause.suggestion,
                     severity: clause.severity,
+                    futureBenefits: clause.futureBenefits,
+                    futureLosses: clause.futureLosses
                 })
             )
         );
@@ -140,28 +130,4 @@ const analyzeDocument = async (req, res) => {
     }
 };
 
-const getDocumentAnalysis = async (req, res) => {
-    try {
-        const documentId = req.params.id;
-        const document = await Document.findById(documentId);
-        if (!document) {
-            return res.status(404).json({ error: 'Document not found' });
-        }
-        const userId = req.user?.id || req.user?._id || '000000000000000000000000';
-        if (document.userId.toString() !== userId.toString() && userId !== '000000000000000000000000') {
-            return res.status(403).json({ error: 'Access denied' });
-        }
-        const clauses = await ProblematicClause.find({ documentId });
-        return res.status(200).json({
-            documentId: document._id,
-            filename: document.filename,
-            status: document.status,
-            problematicClauses: clauses
-        });
-    } catch (error) {
-        console.error('Fetch Analysis Error:', error);
-        return res.status(500).json({ error: 'Failed to fetch analysis', details: error.message });
-    }
-};
-
-export default { analyzeDocument, getDocumentAnalysis, getUserDocuments };
+export default { analyzeDocument };

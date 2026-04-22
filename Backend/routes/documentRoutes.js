@@ -1,8 +1,11 @@
-const express = require('express');
+import express from 'express';
+import { getUserDocuments, getDocumentAnalysis, deleteDocument } from '../controllers/documentController.js';
+import verifyToken from '../middleware/auth.js';
+
 const router = express.Router();
-const { getDocumentHistory } = require('../controllers/documentController');
-const { protect } = require('../middleware/authMiddleware');
 
-router.route('/').get(protect, getDocumentHistory);
+router.get('/user-history', verifyToken, getUserDocuments);
+router.get('/:id/analysis', verifyToken, getDocumentAnalysis);
+router.delete('/:id', verifyToken, deleteDocument);
 
-module.exports = router;
+export default router;

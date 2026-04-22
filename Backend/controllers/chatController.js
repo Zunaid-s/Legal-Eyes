@@ -1,6 +1,6 @@
-const Document = require('../models/Document');
-const ProblematicClause = require('../models/ProblematicClause');
-const { GoogleGenerativeAI } = require("@google/generative-ai");
+import Document from '../model/Document.js';
+import ProblematicClause from '../model/ProblematicClause.js';
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
@@ -13,18 +13,23 @@ export const chatWithDocument = async (req, res) => {
 
         if (!doc) return res.status(404).json({ message: "Document not found" });
 
+        if (!req.session.chatHistory) {
+            req.session.chatHistory = [];
+        }
+        req.session.chatHistory.push(`User: ${message}`);
+
         const context = `
             You are a legal assistant. 
-            Document Title: ${doc.title}
-            Full Content: ${doc.content}
-            Identified Issues: ${clauses.map(c => c.explanation).join(", ")}
+            Document Filename: ${doc.filename}
+            Identified Issues: ${clauses.map(c => `Clause: "${c.originalClause}" - Issue: ${c.issueDescription}`).join(" | ")}
+            Previous conversations: ${req.session.chatHistory.slice(-10).join(" | ")}
             User Question: ${message}
         `;
 
-        const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+        const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
         const result = await model.generateContent(context);
         const response = await result.response;
-        
+
         res.status(200).json({ reply: response.text() });
 
     } catch (error) {
