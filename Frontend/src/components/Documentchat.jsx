@@ -44,6 +44,13 @@ export default function DocumentChat({ documentId, authToken, showToast }) {
     window.speechSynthesis.speak(utterance);
   };
 
+  useEffect(() => {
+    if (transcript && listening) {
+      setInput(prev => prev + (prev ? ' ' : '') + transcript);
+      resetTranscript();
+    }
+  }, [transcript, listening, resetTranscript]);
+
   const toggleListen = () => {
     if (!browserSupportsSpeechRecognition) {
       showToast("Speech recognition is not supported in this browser.");
@@ -178,11 +185,8 @@ export default function DocumentChat({ documentId, authToken, showToast }) {
               <input 
                 className="input input-ghost w-full focus:bg-transparent text-sm h-10 rounded-none" 
                 placeholder={listening ? "Listening... Speak clearly" : "Type a question..."} 
-                value={input + (transcript ? (input ? ' ' : '') + transcript : '')}
-                onChange={(e) => {
-                  setInput(e.target.value);
-                  resetTranscript();
-                }}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
               />
               
