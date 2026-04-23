@@ -1,18 +1,23 @@
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
+import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
 import BASE_URL from '../services/api';
 
 export default function DocumentChat({ documentId, authToken, showToast }) {
   const [messages, setMessages] = useState([{ role: 'ai', text: "I'm ready. You can type or click the mic to speak!" }]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [isListening, setIsListening] = useState(false);
-  const [interimInput, setInterimInput] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   
-  // Use a ref to store the recognition object to prevent re-renders from killing it
-  const recognitionRef = useRef(null);
+  const {
+    transcript,
+    listening,
+    resetTranscript,
+    browserSupportsSpeechRecognition,
+    isMicrophoneAvailable
+  } = useSpeechRecognition();
+
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -21,106 +26,55 @@ export default function DocumentChat({ documentId, authToken, showToast }) {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages, interimInput]);
+  }, [messages, transcript]);
+
+  useEffect(() => {
+    if (!isMicrophoneAvailable) {
+      // showToast("Microphone is not available.");
+    }
+  }, [isMicrophoneAvailable]);
 
   const speakText = (text) => {
     if (!window.speechSynthesis) return;
-    
-    // Stop any existing speech
     window.speechSynthesis.cancel();
-    
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.onstart = () => setIsSpeaking(true);
     utterance.onend = () => setIsSpeaking(false);
     utterance.onerror = () => setIsSpeaking(false);
-    
     window.speechSynthesis.speak(utterance);
   };
 
-  useEffect(() => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      console.error("Browser does not support Speech Recognition.");
-      return;
-    }
-
-    const recognition = new SpeechRecognition();
-    recognition.continuous = true; 
-    recognition.interimResults = true;
-    recognition.lang = 'en-US';
-
-    recognition.onstart = () => setIsListening(true);
-
-    recognition.onresult = (event) => {
-      let interim = '';
-      let final = '';
-
-      for (let i = event.resultIndex; i < event.results.length; ++i) {
-        if (event.results[i].isFinal) {
-          final += event.results[i][0].transcript;
-        } else {
-          interim += event.results[i][0].transcript;
-        }
-      }
-
-      if (final) {
-        setInput(prev => prev + final);
-        setInterimInput('');
-      } else {
-        setInterimInput(interim);
-      }
-      
-      // Auto-scroll to bottom of input if it's a textarea or just keep it visible
-    };
-
-    recognition.onerror = (event) => {
-      console.error("Speech Error:", event.error);
-      setIsListening(false);
-      if (event.error === 'not-allowed') {
-        showToast("Microphone access denied. Please enable it in browser settings.");
-      }
-    };
-
-    recognition.onend = () => setIsListening(false);
-    recognitionRef.current = recognition;
-  }, [showToast]);
-
   const toggleListen = () => {
-    if (!recognitionRef.current) {
+    if (!browserSupportsSpeechRecognition) {
       showToast("Speech recognition is not supported in this browser.");
       return;
     }
 
-    if (isListening) {
-      recognitionRef.current.stop();
+    if (listening) {
+      SpeechRecognition.stopListening();
     } else {
-      try {
-        recognitionRef.current.start();
-      } catch (err) {
-        // Prevents crash if start is called while already active
-        recognitionRef.current.stop();
-      }
+      resetTranscript();
+      SpeechRecognition.startListening({ continuous: true });
     }
   };
 
   const sendMessage = async (overrideInput) => {
-    const textToSend = overrideInput || (input + interimInput);
+    const textToSend = overrideInput || (input + (transcript ? ' ' + transcript : ''));
     if (!textToSend.trim() || loading) return;
     
-    // Stop listening if active when sending
-    if (isListening && recognitionRef.current) {
-      recognitionRef.current.stop();
+    if (listening) {
+      SpeechRecognition.stopListening();
     }
 
     const userMessage = { role: 'user', text: textToSend };
     setMessages(prev => [...prev, userMessage]);
     setInput('');
-    setInterimInput('');
+    resetTranscript();
     setLoading(true);
 
     try {
       const token = authToken || localStorage.getItem('legal-eyes_token');
-      const chatHistory = messages.slice(-5); // Send last 5 messages for context
+      const chatHistory = messages.slice(-5);
       const res = await axios.post(`${BASE_URL}/api/v1/documents/${documentId}/chat`, 
         { message: textToSend, history: chatHistory },
         { headers: { Authorization: `Bearer ${token}` } }
@@ -159,7 +113,7 @@ export default function DocumentChat({ documentId, authToken, showToast }) {
               <span className="text-primary text-xs">●</span> AI Assistant
             </h3>
             <div className="flex items-center gap-3">
-              {isListening && (
+              {listening && (
                 <div className="flex items-center gap-2">
                   <span className="relative flex h-2 w-2">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-none bg-error opacity-75"></span>
@@ -181,7 +135,7 @@ export default function DocumentChat({ documentId, authToken, showToast }) {
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {messages.map((m, i) => (
               <div key={i} className={`chat ${m.role === 'ai' ? 'chat-start' : 'chat-end'}`}>
-                <div className={`chat-bubble text-sm ${m.role === 'ai' ? 'chat-bubble-primary shadow-md' : ''}`}>
+                <div className={`chat-bubble text-sm ${m.role === 'ai' ? 'chat-bubble-primary shadow-md' : ''} rounded-none`}>
                   {m.text}
                   {m.role === 'ai' && (
                     <button 
@@ -199,7 +153,7 @@ export default function DocumentChat({ documentId, authToken, showToast }) {
             ))}
             {loading && (
               <div className="chat chat-start">
-                <div className="chat-bubble chat-bubble-primary shadow-md text-sm italic opacity-70">
+                <div className="chat-bubble chat-bubble-primary shadow-md text-sm italic opacity-70 rounded-none">
                   Thinking...
                 </div>
               </div>
@@ -208,13 +162,13 @@ export default function DocumentChat({ documentId, authToken, showToast }) {
           </div>
 
           <div className="p-4 bg-base-100 border-t border-base-300" style={{ borderRadius: '0px' }}>
-            <div className="flex gap-2 items-center bg-base-200 p-1 pr-2 border border-transparent focus-within:border-primary transition-colors" style={{ borderRadius: '0px' }}>
+            <div className="flex gap-2 items-center bg-base-200 p-1 pr-2 border border-transparent focus-within:border-primary transition-colors rounded-none">
               <button 
                 onClick={toggleListen}
-                className={`btn btn-square btn-ghost btn-sm transition-all ${isListening ? 'text-error bg-error/10 animate-pulse' : 'opacity-60 hover:opacity-100 hover:bg-base-300'}`}
+                className={`btn btn-square btn-ghost btn-sm transition-all ${listening ? 'text-error bg-error/10 animate-pulse' : 'opacity-60 hover:opacity-100 hover:bg-base-300'}`}
                 style={{ borderRadius: '0px' }}
               >
-                {isListening ? (
+                {listening ? (
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H10a1 1 0 01-1-1v-4z" /></svg>
                 ) : (
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
@@ -222,18 +176,17 @@ export default function DocumentChat({ documentId, authToken, showToast }) {
               </button>
               
               <input 
-                className="input input-ghost w-full focus:bg-transparent text-sm h-10" 
-                style={{ borderRadius: '0px' }}
-                placeholder={isListening ? "Listening... Speak clearly" : "Type a question..."} 
-                value={input + interimInput}
+                className="input input-ghost w-full focus:bg-transparent text-sm h-10 rounded-none" 
+                placeholder={listening ? "Listening... Speak clearly" : "Type a question..."} 
+                value={input + (transcript ? (input ? ' ' : '') + transcript : '')}
                 onChange={(e) => {
                   setInput(e.target.value);
-                  setInterimInput('');
+                  resetTranscript();
                 }}
                 onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
               />
               
-              <button className="btn btn-primary btn-sm h-8 min-h-0" style={{ borderRadius: '0px' }} onClick={sendMessage}>Send</button>
+              <button className="btn btn-primary btn-sm h-8 min-h-0 rounded-none" onClick={sendMessage}>Send</button>
             </div>
           </div>
         </div>
