@@ -13,8 +13,8 @@ import { fileURLToPath } from 'url';
 import User from './model/user.js';
 import analyzeController from './controllers/analyzeController.js';
 import verifyToken from './middleware/auth.js';
-import chatRoutes from './routes/chatRoutes.js';
 import documentRoutes from './routes/documentRoutes.js';
+import chatRoutes from './routes/chatRoutes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
