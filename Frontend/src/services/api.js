@@ -1,4 +1,4 @@
-const BASE_URL = 'http://localhost:5000';
+const BASE_URL = process.env.BASEURL || 'http://localhost:5000';
 
 // Uploading document for analysis
 export const uploadDocument = async (formData, token) => {
